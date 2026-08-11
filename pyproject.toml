@@ -1,0 +1,17 @@
+[project]
+name = "studyrag"
+version = "0.1.0"
+description = "Retrieval-augmented study assistant over course notes"
+requires-python = ">=3.12"
+dependencies = [
+    "psycopg[binary]>=3.2",
+    "pgvector>=0.3",
+    "pydantic-settings>=2.6",
+    "python-dotenv>=1.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.3", "ruff>=0.8"]
+
+[tool.ruff]
+line-length = 100

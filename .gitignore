@@ -1,0 +1,15 @@
+# Secrets
+.env
+
+# Local-only working docs — never pushed
+CLAUDE.md
+DECISIONS.md
+.env.example
+
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+data/raw/*
+!data/raw/.gitkeep
