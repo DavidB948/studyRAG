@@ -1,0 +1,86 @@
+[
+  {
+    "id": "cs5242-01",
+    "course": "CS5242",
+    "question": "What are the main practical limitations of Multi-Layer Perceptrons (MLPs) when applied to structured data?",
+    "reference": "MLPs are practically very hard to train because they have too many parameters and take too long. They are also prone to overfitting and do not generalize well.",
+    "section": "Data structure"
+  },
+  {
+    "id": "cs5242-02",
+    "course": "CS5242",
+    "question": "Who introduced the Neocognitron algorithm, and how did it model biological reception fields?",
+    "reference": "The Neocognitron was introduced by Fukushima in 1987 as the first algorithm implementing Hubel and Wiesel's visual recognition system. It introduced local features by cascading simple and complex cells (V1 and V2 cells) to form a hierarchical organization.",
+    "section": "Local reception fields"
+  },
+  {
+    "id": "cs5242-03",
+    "course": "CS5242",
+    "question": "Why is template matching with a single template ineffective for detecting uncentered handwritten digits?",
+    "reference": "A single template is only useful for one specific location. If images are not well centered, it becomes intractable to design a pattern template for all possible locations in the image.",
+    "section": "Local reception fields"
+  },
+  {
+    "id": "cs5242-04",
+    "course": "CS5242",
+    "question": "What key discovery about V1 cells in the primary visual cortex was made by Hubel and Wiesel in 1959?",
+    "reference": "Hubel and Wiesel discovered that the visual cortex is composed of receptive fields called V1 cells containing neurons that activate depending on local orientation.",
+    "section": "Local reception fields"
+  },
+  {
+    "id": "cs5242-05",
+    "course": "CS5242",
+    "question": "What does it mean for image data to be compositional according to the lecture slides?",
+    "reference": "Image data is compositional because it is formed from hierarchical local stationary patterns, where simple patterns compose to form abstract complex concepts.",
+    "section": "Modeling of hierarchical organization"
+  },
+  {
+    "id": "cs5242-06",
+    "course": "CS5242",
+    "question": "How can 3x3 templates capture multi-scale features across layers in a ConvNet?",
+    "reference": "Multi-scale features are captured by applying 3x3 templates at different image resolutions. When projected back to the original image resolution, templates learned at lower resolutions correspond to larger receptive fields such as 5x5 or 7x7.",
+    "section": "Modeling of hierarchical organization"
+  },
+  {
+    "id": "cs5242-07",
+    "course": "CS5242",
+    "question": "What two operations are used to change image resolution in hierarchical feature extraction?",
+    "reference": "Image resolution is changed using down-sampling and pooling, such as max pooling or average pooling.",
+    "section": "Modeling of hierarchical organization"
+  },
+  {
+    "id": "cs5242-08",
+    "course": "CS5242",
+    "question": "How does a max pooling layer process activation maps in a one-layer ConvNet?",
+    "reference": "The max pooling layer extracts the maximal activation value from each activation map.",
+    "section": "One-layer convolutional neural network"
+  },
+  {
+    "id": "cs5242-09",
+    "course": "CS5242",
+    "question": "How did computer vision feature extraction differ before and after the introduction of deep learning?",
+    "reference": "Before deep learning, computer vision relied on handcrafted features (such as SIFT) combined with separate classifiers like SVMs. With deep learning, network architectures like AlexNet automatically learn features together with the classifier.",
+    "section": "Paradigm shift in computer vision"
+  },
+  {
+    "id": "cs5242-10",
+    "course": "CS5242",
+    "question": "Which deep ConvNet architectures are specifically named in the slides as examples of stacking multiple convolutional and pooling layers?",
+    "reference": "The slides list LeNet5, AlexNet, VGG, Inception, and ResNet as examples of deep ConvNets.",
+    "section": "Paradigm shift in computer vision"
+  },
+  {
+    "id": "cs5242-11",
+    "course": "CS5242",
+    "question": "What is the exact formula for computing the output shape of a convolution layer given padding and stride values?",
+    "reference": "NOT_IN_CORPUS",
+    "section": null
+  },
+  {
+    "id": "cs5242-12",
+    "course": "CS5242",
+    "question": "What is the mathematical formulation and function of Batch Normalization in deep CNNs?",
+    "reference": "NOT_IN_CORPUS",
+    "section": null
+  }
+]

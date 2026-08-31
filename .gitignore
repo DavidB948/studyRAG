@@ -1,10 +1,16 @@
+# macOS
+.DS_Store
+
 # Secrets
 .env
 
 # Local-only working docs — never pushed
 CLAUDE.md
 DECISIONS.md
-.env.example
+QUESTIONS.md
+
+# MCP server config — holds a Supabase access token
+.mcp.json
 
 .venv/
 __pycache__/
