@@ -1,0 +1,184 @@
+{
+  "run_at": "2026-09-01T09:51:23.674832+00:00",
+  "judge_model": "deepseek-chat",
+  "n_questions_requested": 8,
+  "threshold": 0.8,
+  "by_scope": {
+    "CS5242 / Lecture 4": {
+      "n_requested": 8,
+      "n_generated": 8,
+      "n_kept": 8,
+      "sections_covered": 8,
+      "sections_available": 14,
+      "coverage": 0.5714,
+      "quote_validity": 1.0,
+      "n_dropped_over_quota": 0,
+      "n_topup_rounds": 0,
+      "faithfulness": 0.9583
+    },
+    "CS5242 / Lecture 5": {
+      "n_requested": 8,
+      "n_generated": 8,
+      "n_kept": 7,
+      "sections_covered": 5,
+      "sections_available": 6,
+      "coverage": 0.8333,
+      "quote_validity": 1.0,
+      "n_dropped_over_quota": 1,
+      "n_topup_rounds": 1,
+      "faithfulness": 0.8044
+    },
+    "CS5242 / Lecture 6": {
+      "n_requested": 8,
+      "n_generated": 9,
+      "n_kept": 8,
+      "sections_covered": 8,
+      "sections_available": 9,
+      "coverage": 0.8889,
+      "quote_validity": 0.8889,
+      "n_dropped_over_quota": 0,
+      "n_topup_rounds": 1,
+      "faithfulness": 1.0
+    }
+  },
+  "per_question": [
+    {
+      "scope": "CS5242 / Lecture 5",
+      "section": "Paradigm shift in computer vision",
+      "question": "What was the significance of AlexNet in 2012?",
+      "faithfulness": 0.5
+    },
+    {
+      "scope": "CS5242 / Lecture 4",
+      "section": "PyTorch implementation",
+      "question": "What does the requires_grad_() function do in PyTorch?",
+      "faithfulness": 0.6667
+    },
+    {
+      "scope": "CS5242 / Lecture 5",
+      "section": "One-layer convolutional neural network",
+      "question": "In a one-layer ConvNet, what is the role of the max pooling layer?",
+      "faithfulness": 0.6667
+    },
+    {
+      "scope": "CS5242 / Lecture 5",
+      "section": "Data structure",
+      "question": "What is the main motivation for using convolutional neural networks over MLPs according to the lecture?",
+      "faithfulness": 0.7143
+    },
+    {
+      "scope": "CS5242 / Lecture 5",
+      "section": "Local reception fields",
+      "question": "Why are local features important for image recognition, especially when digits are not centered?",
+      "faithfulness": 0.75
+    },
+    {
+      "scope": "CS5242 / Lecture 4",
+      "section": "Multi-Layer Perceptron",
+      "question": "What is a Multi-Layer Perceptron (MLP) and what is it also known as?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 4",
+      "section": "Loss and gradient descent",
+      "question": "What is the mini-batch loss LB and how is it computed?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 4",
+      "section": "Backpropagation",
+      "question": "What are the three steps of backpropagation?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 4",
+      "section": "The three representations of neural networks",
+      "question": "What are the three representations of neural networks?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 4",
+      "section": "The importance of non-linearities",
+      "question": "Why are non-linearities introduced between layers?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 4",
+      "section": "The importance of multiple layers",
+      "question": "Why is a one-layer network insufficient for classifying digits as small vs large, but a two-layer network can solve it?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 4",
+      "section": "Labs with MNIST and CIFAR",
+      "question": "What are the training and test set sizes for the MNIST dataset?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 5",
+      "section": "Local reception fields",
+      "question": "What did Hubel and Wiesel discover about the visual cortex, and how does it relate to CNNs?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 5",
+      "section": "Modeling of hierarchical organization",
+      "question": "How are hierarchical features captured in CNNs according to the lecture?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 5",
+      "section": "One-layer convolutional neural network",
+      "question": "In the one-layer ConvNet architecture, what is the tensor shape of the input image and the activation maps?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 6",
+      "section": "slides 1-8",
+      "question": "What is the purpose of multi-hop attention in memory networks?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 6",
+      "section": "slides 9-16",
+      "question": "What are the three improvements of Transformers over memory networks?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 6",
+      "section": "slides 17-24",
+      "question": "What is the purpose of the mask in masked multi-head attention during training?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 6",
+      "section": "slides 25-32",
+      "question": "How is the new vector representation of a word computed in the attention mechanism?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 6",
+      "section": "slides 33-40",
+      "question": "Why are attention networks better than RNNs for long sequences?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 6",
+      "section": "slides 41-48",
+      "question": "Why is a mask not used in cross-attention?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 6",
+      "section": "slides 57-64",
+      "question": "What is the main advantage of GPT-2 over previous models?",
+      "faithfulness": 1.0
+    },
+    {
+      "scope": "CS5242 / Lecture 6",
+      "section": "slides 49-56",
+      "question": "What is the purpose of cross-attention in machine translation?",
+      "faithfulness": 1.0
+    }
+  ]
+}

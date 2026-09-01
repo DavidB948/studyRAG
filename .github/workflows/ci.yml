@@ -1,0 +1,29 @@
+# Lint and unit tests only. The ragas eval is not run here: the corpus is course
+# material I can't publish, so CI has nothing to ingest, and the judge is a paid API.
+# The eval numbers in the README come from `uv run python evals/run_eval.py` locally.
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+        with:
+          version: "0.6.9"
+          enable-cache: true
+
+      - name: Install
+        run: uv sync --frozen
+
+      - name: Lint
+        run: uv run ruff check .
+
+      - name: Test
+        run: uv run pytest -q

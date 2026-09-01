@@ -11,6 +11,8 @@ dependencies = [
     "pypdf>=6.15.0",
     "sentence-transformers>=6.0.0",
     "openai>=3.6.0",
+    "fastapi>=0.141.1",
+    "uvicorn[standard]>=0.52.4",
 ]
 
 # Makes `studyrag` importable from scripts and tests without sys.path hacks:

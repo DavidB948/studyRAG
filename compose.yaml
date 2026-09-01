@@ -1,0 +1,41 @@
+# Runs the whole stack locally, so the demo never depends on a hosted database being
+# awake. Same schema and same pgvector extension as Supabase — only the host differs.
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_PASSWORD: studyrag
+      POSTGRES_DB: studyrag
+    ports: ["127.0.0.1:5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Applied automatically on first start of an empty database.
+      - ./studyrag/db/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d studyrag"]
+      interval: 3s
+      retries: 20
+
+  app:
+    build: .
+    ports: ["8000:8000"]
+    depends_on:
+      db: {condition: service_healthy}
+    environment:
+      DATABASE_URL: postgresql://postgres:studyrag@db:5432/studyrag
+      # `:?` aborts `up` with a named variable instead of starting a healthy stack
+      # that 502s on the first question.
+      LLM_BASE_URL: ${LLM_BASE_URL:?set it in .env, see .env.example}
+      LLM_API_KEY: ${LLM_API_KEY:?set it in .env, see .env.example}
+      LLM_MODEL: ${LLM_MODEL:?set it in .env, see .env.example}
+      # Separate judge model for evals; falls back to LLM_* when unset.
+      JUDGE_BASE_URL: ${JUDGE_BASE_URL:-}
+      JUDGE_API_KEY: ${JUDGE_API_KEY:-}
+      JUDGE_MODEL: ${JUDGE_MODEL:-}
+    volumes:
+      - models:/models          # keeps the model download across restarts
+      - ./data:/app/data:ro     # course PDFs, for `docker compose run app python scripts/ingest.py`
+
+volumes:
+  pgdata:
+  models:

@@ -26,8 +26,10 @@ CREATE TABLE IF NOT EXISTS documents (
 CREATE TABLE IF NOT EXISTS chunks (
     id           bigserial   PRIMARY KEY,
     document_id  bigint      NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
-    -- Denormalised on purpose. `course` is the retrieval filter and it must sit on the
-    -- same row as the vector: a filtered ANN scan cannot reach through a join.
+    -- Denormalised on purpose, and NOT for speed: EXPLAIN at this corpus size shows
+    -- Postgres skipping the HNSW index entirely, so the filter costs the same either
+    -- way. It is here because course isolation is an invariant, and a copy on the
+    -- vector's own row cannot be lost by a later change to the join.
     course       text        NOT NULL,
     section      text,                   -- nearest sub-heading; varies per chunk
     ordinal      int         NOT NULL,   -- position within the document, 0-based

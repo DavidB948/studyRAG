@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>StudyRAG</title>
+<style>
+  :root {
+    --bg:#faf9f7; --card:#fff; --ink:#1c1b19; --muted:#6b6862; --line:#e5e2dc;
+    --accent:#8a3f2c; --accent-soft:#f5ece9; --gen:#f0f4f8; --gen-line:#c9d6e2;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --bg:#17171a; --card:#1f1f23; --ink:#eceae6; --muted:#9a968e; --line:#31313a;
+    --accent:#e0947e; --accent-soft:#2b2020; --gen:#1c232b; --gen-line:#33475a;}}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.6 ui-serif,Georgia,'Times New Roman',serif;}
+  .wrap{max-width:780px;margin:0 auto;padding:40px 20px 80px}
+  header{margin-bottom:24px}
+  h1{font-size:28px;margin:0 0 4px;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:14px}
+
+  /* Mode is a tab, not a dropdown: the two modes ask for different inputs, and a
+     dropdown would hide that the whole form changes underneath it. */
+  .tabs{display:flex;gap:2px;margin:22px 0 14px;border-bottom:1px solid var(--line)}
+  .tab{background:none;border:0;border-bottom:2px solid transparent;border-radius:0;
+    padding:9px 15px;color:var(--muted);cursor:pointer;
+    font:600 13px/1 ui-sans-serif,system-ui;letter-spacing:.02em}
+  .tab[aria-selected=true]{color:var(--accent);border-bottom-color:var(--accent)}
+  .tab-hint{color:var(--muted);font-size:13px;margin:0 0 14px}
+
+  form{display:flex;gap:8px;margin:0 0 20px;flex-wrap:wrap;align-items:center}
+  select,input,button{font:inherit;padding:11px 13px;border:1px solid var(--line);
+    border-radius:8px;background:var(--card);color:var(--ink)}
+  input{flex:1;min-width:220px}
+  input[type=number]{flex:0 0 76px;min-width:0}
+  .scope{display:flex;gap:8px;flex-wrap:wrap;width:100%}
+  .scope select{flex:1;min-width:150px}
+  button.go{background:var(--accent);color:#fff;border-color:var(--accent);cursor:pointer;
+    font-weight:600;padding-inline:20px}
+  button.go:disabled{opacity:.5;cursor:default}
+  label.n{color:var(--muted);font-size:13px;font-family:ui-sans-serif,system-ui}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:10px;
+    padding:20px 22px;margin-bottom:16px}
+  .label{font:600 11px/1 ui-sans-serif,system-ui;letter-spacing:.09em;
+    text-transform:uppercase;color:var(--muted);margin-bottom:12px}
+  .grounded{border-left:3px solid var(--accent)}
+  .claim{margin-bottom:14px}
+  .claim p{margin:0 0 3px}
+  cite{display:block;font:400 12px/1.5 ui-sans-serif,system-ui;color:var(--muted);
+    font-style:normal}
+  .generated{background:var(--gen);border-color:var(--gen-line)}
+  .generated .label{color:var(--muted)}
+  .gen-item{margin-bottom:14px}
+  .gen-item:last-child{margin-bottom:0}
+  .gen-item h3{font:600 13px/1.4 ui-sans-serif,system-ui;margin:0 0 3px;color:var(--muted)}
+  .gap{background:var(--accent-soft);border-color:var(--accent)}
+  ul{margin:4px 0 0;padding-left:20px}
+  .empty{color:var(--muted);font-style:italic}
+  .err{color:#b3261e}
+  .spin{display:inline-block;width:13px;height:13px;border:2px solid var(--line);
+    border-top-color:var(--accent);border-radius:50%;animation:s .7s linear infinite;
+    vertical-align:-2px;margin-right:7px}
+  @keyframes s{to{transform:rotate(360deg)}}
+
+  /* Quiz */
+  .quiz-head{display:flex;justify-content:space-between;align-items:baseline;gap:14px;
+    flex-wrap:wrap;margin-bottom:14px}
+  .coverage{color:var(--muted);font:400 13px ui-sans-serif,system-ui}
+  .q{border-bottom:1px solid var(--line);padding:16px 0}
+  .q:first-of-type{padding-top:0}
+  .q:last-child{border-bottom:0;padding-bottom:0}
+  .q-text{margin:0 0 8px;display:flex;gap:10px}
+  .q-num{color:var(--muted);font:600 13px/1.7 ui-sans-serif,system-ui;flex:0 0 20px}
+  .reveal{background:none;border:1px solid var(--line);color:var(--muted);
+    font:600 11px/1 ui-sans-serif,system-ui;letter-spacing:.06em;text-transform:uppercase;
+    padding:7px 11px;border-radius:6px;cursor:pointer;margin-left:30px}
+  .reveal:hover{color:var(--accent);border-color:var(--accent)}
+  .answer{margin:10px 0 0 30px;padding-left:12px;border-left:2px solid var(--accent)}
+  .answer p{margin:0 0 4px}
+
+  .files{margin:-6px 0 20px;font:400 13px/1.7 ui-sans-serif,system-ui}
+  .files summary{color:var(--muted)}
+  .files ul{list-style:none;padding:10px 0 0;margin:0}
+  .files li{display:flex;justify-content:space-between;gap:14px;padding:5px 0;
+    border-bottom:1px solid var(--line)}
+  .files li:last-child{border:0}
+  .files .name{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .files .meta{color:var(--muted);white-space:nowrap;font-size:12px}
+  details{margin-top:8px}
+  summary{cursor:pointer;font:400 12px ui-sans-serif,system-ui;color:var(--muted)}
+  pre{white-space:pre-wrap;font:12px/1.5 ui-monospace,monospace;color:var(--muted);
+    max-height:280px;overflow:auto;margin:8px 0 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>StudyRAG</h1>
+    <div class="sub">Answers grounded in your own course material — every claim cited,
+      everything else marked as generated.</div>
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" id="tab-ask"  aria-selected="true"  onclick="setMode('ask')">Ask</button>
+    <button class="tab" role="tab" id="tab-quiz" aria-selected="false" onclick="setMode('quiz')">Quiz</button>
+  </div>
+
+  <p class="tab-hint" id="hint"></p>
+
+  <form id="f">
+    <div class="scope">
+      <select id="course"></select>
+      <select id="lecture"></select>
+    </div>
+    <input id="q" placeholder="Why do convolutional networks use local receptive fields?"
+           autocomplete="off">
+    <label class="n" id="n-label" for="n" hidden>Questions</label>
+    <input id="n" type="number" min="1" max="25" value="8" hidden>
+    <button class="go" id="go">Ask</button>
+  </form>
+
+  <details class="files" id="files"></details>
+
+  <div id="out"></div>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const esc = t => String(t ?? '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+let COURSES = [];
+let MODE = 'ask';
+
+const HINTS = {
+  ask: 'Ask a question. Answers come only from the material below, and say so when they cannot.',
+  quiz: 'Generate revision questions over a lecture. Questions are spread across its sections, not drawn from one.',
+};
+
+function setMode(mode) {
+  MODE = mode;
+  $('#tab-ask').ariaSelected = String(mode === 'ask');
+  $('#tab-quiz').ariaSelected = String(mode === 'quiz');
+  $('#hint').textContent = HINTS[mode];
+  $('#q').hidden = mode !== 'ask';
+  $('#q').required = mode === 'ask';
+  $('#n').hidden = $('#n-label').hidden = mode !== 'quiz';
+  $('#go').textContent = mode === 'ask' ? 'Ask' : 'Generate quiz';
+  $('#out').innerHTML = '';
+}
+
+fetch('/api/courses').then(r => r.json()).then(cs => {
+  COURSES = cs;
+  $('#course').innerHTML = cs.map(c =>
+    `<option value="${esc(c.course)}">${esc(c.course)}</option>`).join('')
+    || '<option>no material ingested</option>';
+  onCourseChange();
+});
+
+$('#course').addEventListener('change', onCourseChange);
+
+function onCourseChange() { showLectures(); showFiles(); }
+
+function showLectures() {
+  const c = COURSES.find(c => c.course === $('#course').value);
+  const lectures = c ? [...new Set(c.documents.map(d => d.lecture).filter(Boolean))] : [];
+  $('#lecture').innerHTML = '<option value="">All lectures</option>' +
+    lectures.map(l => `<option value="${esc(l)}">${esc(l)}</option>`).join('');
+}
+
+function showFiles() {
+  const c = COURSES.find(c => c.course === $('#course').value);
+  if (!c) { $('#files').innerHTML = ''; return; }
+  $('#files').innerHTML = `
+    <summary>${c.documents.length} file(s) ingested · ${c.chunks} chunks — answers can only come from these</summary>
+    <ul>${c.documents.map(d => `<li>
+        <span class="name">${esc(d.doc_path)}</span>
+        <span class="meta">${esc(d.lecture || 'no lecture')} · ${d.chunks} chunks</span>
+      </li>`).join('')}</ul>`;
+}
+
+$('#f').addEventListener('submit', async e => {
+  e.preventDefault();
+  const course = $('#course').value;
+  const lecture = $('#lecture').value || null;
+  const quiz = MODE === 'quiz';
+  const question = $('#q').value.trim();
+  if (!quiz && !question) return;
+
+  $('#go').disabled = true;
+  $('#out').innerHTML = `<div class="card"><span class="spin"></span>${
+    quiz ? 'Reading the lecture and writing questions…' : 'Retrieving and checking claims…'}</div>`;
+
+  const body = quiz
+    ? {course, lecture, n_questions: Number($('#n').value)}
+    : {course, lecture, question};
+
+  try {
+    const res = await fetch(quiz ? '/api/quiz' : '/api/ask', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) throw new Error((await res.json()).detail || res.statusText);
+    const data = await res.json();
+    $('#out').innerHTML = quiz ? renderQuiz(data) : renderAnswer(data);
+  } catch (err) {
+    $('#out').innerHTML = `<div class="card err">${esc(err.message)}</div>`;
+  } finally { $('#go').disabled = false; }
+});
+
+function renderAnswer(r) {
+  const parts = [];
+
+  if (r.claims.length) {
+    parts.push(`<div class="card grounded">
+      <div class="label">Grounded in your material</div>
+      ${r.claims.map(c => `<div class="claim"><p>${esc(c.text)}</p><cite>${esc(c.citation)}</cite></div>`).join('')}
+    </div>`);
+  } else {
+    parts.push(`<div class="card"><p class="empty">No claim could be grounded in your material for this question.</p></div>`);
+  }
+
+  if (r.not_covered) {
+    parts.push(`<div class="card gap"><div class="label">Not in your material</div><p>${esc(r.not_covered)}</p></div>`);
+  }
+
+  const gen = [
+    ['Analogy', r.analogy],
+    ['Exam angle', r.exam_angle],
+    ['Common trap', r.common_trap],
+  ].filter(([, v]) => v);
+
+  if (gen.length || (r.check_yourself || []).length) {
+    parts.push(`<div class="card generated">
+      <div class="label">Model-generated · not from your slides, not scored</div>
+      ${gen.map(([h, v]) => `<div class="gen-item"><h3>${h}</h3><p>${esc(v)}</p></div>`).join('')}
+      ${(r.check_yourself || []).length ? `<div class="gen-item"><h3>Check yourself</h3>
+        <ul>${r.check_yourself.map(q => `<li>${esc(q)}</li>`).join('')}</ul></div>` : ''}
+    </div>`);
+  }
+
+  if (r.passages.length) {
+    parts.push(`<details><summary>${r.passages.length} passage(s) retrieved</summary>
+      ${r.passages.map(p => `<pre>[${p.score.toFixed(3)}] ${esc(p.doc_path)} | ${esc(p.section || '—')}
+${esc(p.content.slice(0, 700))}</pre>`).join('')}</details>`);
+  }
+
+  return parts.join('');
+}
+
+function renderQuiz(r) {
+  if (!r.questions.length) {
+    return `<div class="card"><p class="empty">No question could be grounded in this lecture.</p></div>`;
+  }
+
+  // Answers start hidden. It is a quiz: showing the answer beside the question makes
+  // it a summary instead.
+  const questions = r.questions.map((q, i) => `
+    <div class="q">
+      <p class="q-text"><span class="q-num">${i + 1}.</span><span>${esc(q.question)}</span></p>
+      <button class="reveal" onclick="this.nextElementSibling.hidden = !this.nextElementSibling.hidden;
+        this.textContent = this.nextElementSibling.hidden ? 'Show answer' : 'Hide answer'">Show answer</button>
+      <div class="answer" hidden>
+        <p>${esc(q.answer)}</p>
+        <cite>${esc(q.citation)}</cite>
+      </div>
+    </div>`).join('');
+
+  // Coverage is shown because a quiz drawn from one section is a worse quiz, and the
+  // student should be able to see that without running an eval.
+  const short = r.questions.length < r.n_requested
+    ? ` · ${r.questions.length} of ${r.n_requested} requested — the rest had no material to stand on`
+    : '';
+
+  return `<div class="card grounded">
+    <div class="quiz-head">
+      <div class="label" style="margin:0">Quiz · ${esc(r.lecture || r.course)}</div>
+      <span class="coverage">${r.sections_covered} of ${r.sections_available} sections${short}</span>
+    </div>
+    ${questions}
+  </div>
+  <div class="card generated">
+    <div class="label">How these were chosen</div>
+    <p style="margin:0">Every section of the lecture is eligible for at least one question, and
+    longer sections get more. Each answer is checked in code against the section it cites;
+    any question whose evidence could not be found there was dropped.</p>
+  </div>`;
+}
+
+setMode('ask');
+</script>
+</body>
+</html>

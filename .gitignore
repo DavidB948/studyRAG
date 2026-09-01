@@ -19,3 +19,6 @@ __pycache__/
 .ruff_cache/
 data/raw/*
 !data/raw/.gitkeep
+
+# Local Claude Code permissions
+.claude/settings.local.json

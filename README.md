@@ -1,200 +1,180 @@
 # StudyRAG
 
-A retrieval-augmented study assistant over my own NUS course notes.
+A retrieval-augmented study assistant over my own NUS lecture slides. Most of the work
+went into measuring it rather than adding features.
 
-Ask about a lecture, get back **claims traceable to a specific slide** — separated from
-anything the model invented, with an explicit *"not in your material"* when the corpus
-cannot answer.
+**Ask** a question and get an answer built only from your material, every sentence
+carrying the slide it came from. Or **quiz** yourself on a lecture, with a cited answer
+behind each question. If something isn't in your slides, it says so instead of guessing.
 
-The point is not a chatbot. It is a RAG system whose failure modes are measured rather
-than assumed.
-
----
+![Answering a question, with each claim cited to the slide it came from](docs/demo.png)
 
 ## Results
 
-12-question golden set, LLM-drafted and hand-verified, over one lecture deck.
-Judge `deepseek-chat`, embeddings `bge-base-en-v1.5` (local).
+Ask mode, against a golden set of 29 questions over 3 lectures (171 chunks), written by
+an LLM and checked by hand. Scored with ragas, judge model `deepseek-chat`.
 
 | Metric | Score | Bar | |
 |---|---|---|---|
-| faithfulness | **0.963** | 0.80 | Are claims entailed by retrieved context? |
-| answer_relevancy | 0.76–0.81 | 0.80 | Does it answer what was asked? |
-| context_precision | **0.950** | 0.80 | Is the right context ranked highly? |
-| context_recall | **0.950** | 0.80 | Did retrieval find everything needed? |
-| abstention_rate | **1.000** | — | Does it admit gaps? *(custom)* |
-| abstention_faithfulness | **1.000** | 0.80 | Does it stay grounded when it can't answer? *(custom)* |
+| faithfulness | 0.993 | 0.80 | Is every claim supported by what was retrieved? |
+| context_recall | 0.820 | 0.80 | Did retrieval find everything the answer needed? |
+| context_precision | 0.820 | 0.80 | Is the useful context ranked near the top? |
+| answer_relevancy | 0.736 | 0.80 | Does the answer address the question asked? |
+| abstention_rate | 1.000 | — | Does it admit when the answer isn't there? |
+| abstention_faithfulness | 1.000 | 0.80 | When it can't answer, does it stay grounded? |
 
-**`answer_relevancy` is reported as a range on purpose.** Across runs on barely-changed
-code it moved 0.741 / 0.762 / 0.808 / 0.811 — it straddles the bar, and at n=10 with that
-variance I cannot distinguish a real regression from judge noise. Continuing to tweak the
-prompt until it passed would have been overfitting to the eval. The fix is a larger golden
-set, not a better prompt.
+Split by question type, which is where it gets interesting:
 
-The `abstention_*` metrics are mine. **Abstention is refusing to answer when the corpus
-cannot support one** — returning no claims and naming the gap instead of producing a
-plausible answer from adjacent material. Every ragas metric assumes an answer exists, so a
-system that always returns *k* passages and always answers scores identically to one that
-knows its limits. Two golden questions are deliberately unanswerable; `abstention_rate` is
-how often the gap is named, and `abstention_faithfulness` checks that anything it *does*
-say on those questions is still grounded.
+| type | n | precision | recall |
+|---|---|---|---|
+| lexical (rare exact tokens) | 6 | 1.000 | 1.000 |
+| conceptual | 10 | 0.933 | 1.000 |
+| two sections, one lecture | 4 | 1.000 | 0.875 |
+| two different lectures | 5 | 0.233 | 0.200 |
 
-**These numbers are optimistic.** One deck, 21 chunks, one topic, no distractor
-documents — `context_recall` near 1.0 substantially means "there was only one lecture to
-retrieve from". The harness is the deliverable; the numbers get meaningful as the corpus
-grows.
+The last row is the honest weak spot: questions needing two lectures retrieve one of them.
 
----
+The two abstention metrics are my own. Every ragas metric assumes an answer exists, so a
+system that always answers scores the same as one that knows its limits. Four of the
+questions are deliberately unanswerable.
 
-## The failure it caught
+`answer_relevancy` is below the bar, and flat across every question type, which points at
+generation rather than retrieval. Answers got longer once I asked for claims that read as
+connected prose. That was a tradeoff, not a bug.
 
-Asked for the convolution output-shape formula — **not in the slides** — the system
-answered *"determined by input size, filter size, padding, and stride."* Textbook-correct,
-entirely ungrounded, `faithfulness 0.0`. The prompt already forbade outside knowledge.
-Asking was not enough.
+## Quiz mode
 
-The fix moved grounding **from a prompt instruction to a code check**: every claim must
-quote the span it came from, and that quote is verified against the cited passage before
-the claim is allowed out.
+![A quiz over Lecture 6, with answers hidden until you ask for them](docs/quiz.png)
 
-Three iterations, and the cost is the interesting part:
+Quiz retrieves by metadata, not similarity. You pick a lecture, everything in it is in
+scope, and the work is deciding what becomes a question. Every section is guaranteed one;
+the rest go to the longer sections in proportion.
 
-1. **Exact quote match** — killed the hallucination, also dropped a *correct* claim whose
-   quote had been re-wrapped. Answer came back empty.
-2. **75% word overlap** — recovered it, but let meta-claims back in: *"the passage does
-   not give the formula"* shares nearly all its words with the passage.
-3. **Explicit meta-claim rule** — closes what bag-of-words matching structurally cannot
-   see, because word overlap is blind to negation.
+The golden set doesn't transfer, since three of the four ragas metrics need a user
+question or a reference answer and quiz has neither. So it gets three of its own:
 
-A strict verifier trades hallucinations for false rejections. Both directions show up in
-the numbers.
+| lecture | kept | faithfulness | sections covered | quote validity |
+|---|---|---|---|---|
+| Lecture 4 | 8/8 | 0.958 | 8 of 14 | 1.000 |
+| Lecture 5 | 7/8 | 0.804 | 5 of 6 | 1.000 |
+| Lecture 6 | 8/8 | 1.000 | 8 of 9 | 0.889 |
 
----
+Coverage catches what faithfulness can't: a quiz drawn entirely from one section is a bad
+quiz, and faithfulness rates it perfect. Lecture 6 is the interesting row. That deck has
+no section headings at all, so the quiz is built from slide ranges instead, which is why
+its citations read `slides 49-56`.
 
-## Architecture
+## How it works
+
+Both modes share one store and one grounding guarantee. They differ in how they find
+material: ask searches by similarity, quiz filters by metadata. Neither writes its own
+citation, and every claim is checked in code against the text it cites before you see it.
 
 ```mermaid
 flowchart TD
-    PDF[/"PDF in data/raw/COURSE/"/] --> L["<b>loaders</b><br/>extract · strip LaTeXiT blobs<br/>SHA-256 = identity"]
-    L --> C["<b>chunker</b><br/>dispatch on doc_type<br/>slides: 1 page = 1 chunk"]
-    C --> E["<b>embed</b><br/>bge-base-en-v1.5 · 768d · local"]
-    E --> DB[("<b>Postgres + pgvector</b><br/>documents 1─* chunks<br/>HNSW cosine")]
+    PDF[/"PDF slides"/] --> C["chunk<br/>1 slide = 1 chunk"]
+    C --> E["embed<br/>bge-base, local"]
+    E --> DB[("Postgres<br/>+ pgvector")]
 
-    Q[/"question"/] --> S1["<b>1 · retrieve</b> · bi-encoder<br/>cosine over precomputed vectors<br/>WHERE course = ? → top 20<br/><i>wide, approximate, ~5 ms</i>"]
+    ASK[/"Ask: a question"/] --> S1["vector search<br/>course + lecture filter"]
     DB --> S1
-    S1 --> S2["<b>2 · rerank</b> · cross-encoder<br/>reads query + chunk TOGETHER<br/>→ trained 0-1 relevance<br/><i>narrow, accurate, ~1 s</i>"]
-    S2 --> GATE{"score ≥ 0.02<br/>and ≥ 10% of best?"}
-    GATE -->|no| NONE["<b>no passages</b><br/>'not in your material'<br/><i>no LLM call at all</i>"]
-    GATE -->|yes| EXP["<b>3 · expand</b><br/>chunk → its whole section<br/>dedupe overlapping spans"]
-    EXP --> G["<b>4 · generate</b><br/>one LLM call · JSON schema<br/>claim + passage_index + quote"]
-    G --> V{"<b>5 · verify in code</b><br/>index in range?<br/>quote really in passage?<br/>a claim, not a meta-claim?"}
-    V -->|pass| OUT["cited claims<br/>+ analogy · exam angle · traps<br/><i>marked model-generated</i>"]
-    V -->|fail| DROP["claim dropped"]
+    S1 --> S2["rerank<br/>cross-encoder, local"]
+    S2 --> GATE{"relevant<br/>enough?"}
+    GATE -->|no| NONE["'not in your material'<br/>no LLM call"]
+    GATE -->|yes| EXP["expand hits to<br/>whole sections"]
+    EXP --> GEN
 
-    style DB fill:#e8eaf6,stroke:#5c6bc0
-    style S2 fill:#fff3e0,stroke:#f57c00
-    style GATE fill:#fce4ec,stroke:#c2185b
-    style V fill:#fff3e0,stroke:#fb8c00
-    style OUT fill:#e8f5e9,stroke:#43a047
+    QUIZ[/"Quiz: a lecture"/] --> M["metadata filter<br/>nothing embedded"]
+    DB --> M
+    M --> AL["allocate questions<br/>across sections"]
+    AL --> GEN
+
+    GEN["generate<br/>one LLM call, JSON schema"] --> V{"is the quoted evidence<br/>really in the source?"}
+    V -->|yes| OUT["cited claims / questions"]
+    V -->|no| DROP["dropped"]
 ```
 
-**Retrieve deterministically → generate once → verify deterministically.** The model is
-sandwiched between two layers I control, which is what makes the claims defensible rather
-than merely plausible.
+Four choices worth explaining:
 
----
+**Postgres + pgvector rather than a vector database.** Most of what this needs are
+metadata queries, not similarity search. It's a metadata database that also stores vectors.
 
-## Decisions worth defending
+**Chunks are single slides, but retrieval returns whole sections.** A slide averages 60
+tokens, which makes a sharp vector but thin context. Embedding whole sections would blur
+several ideas into one vector.
 
-**Postgres + pgvector, not Pinecone.** Four of six planned queries are pure metadata
-(`DISTINCT ON` for quiz coverage, `GROUP BY` for note density, `id = ANY` for citations),
-which a vector index cannot express. It's a metadata database that also does similarity
-search, not the reverse. *Pinecone genuinely wins on filtered top-k, scale past ~1M
-vectors, and zero index tuning.*
+**Chunks embed with their lecture and section prepended.** A slide body often never names
+its own topic: the title says "Backpropagation", the slide says "compute the gradient with
+respect to each weight". Prepending `course > lecture > section` put that word back, and
+conceptual precision went 0.883 to 0.933.
 
-**Small-to-big: embed the slide, return the section.** Slides average ~60 tokens — sharp
-vector, thin context. Embedding whole sections would average several ideas into one vector
-that matches everything weakly. Expanding at read time costs one extra query.
+**The model returns a passage number, not a citation string.** It picks the source and the
+code writes the reference, so a made-up citation is impossible.
 
-**The model returns a passage *index*; the code writes the citation.** A model asked to
-emit `[lecture05.pdf | p22]` can invent a plausible one that points nowhere. An
-out-of-range index is caught by a bounds check.
+## What I measured and threw away
 
-**Two-stage retrieval, and the reranker earns its place on tokens, not accuracy.** At 21
-chunks the quality gain is inside judge noise — I would not claim otherwise. What it
-measurably bought: **62% less context at equal recall** (54,812 → 20,987 chars over the
-golden set), and a threshold that means something. Cosine needed recalibrating per corpus;
-a cross-encoder outputs a trained probability, separating answerable from unanswerable by
-0.97 vs 0.008 where cosine gave 0.74 vs 0.45. It costs no API spend — 110M params, local,
-~1 s on CPU.
+- **NLI entailment** to replace my word-overlap claim check. Faithfulness dropped 0.977 to
+  0.953 and it discarded 20 correct claims. A correct claim scored 0.016 while the bad
+  claim it was meant to reject scored 0.074, so no threshold separates them.
+- **Query decomposition** for the cross-lecture problem. Precision improved, recall didn't
+  move, and two other slices regressed.
+- **Hybrid search**, which I never built. It's usually justified by dense retrieval being
+  weak on rare tokens, so I wrote six questions to expose that (`Neocognitron`, `SIFT`,
+  `AlexNet`, `1959`). Recall came back 1.000, so there's no gap to close at this size.
 
-**Two relevance gates, swept against the golden set rather than picked by eye.** An
-absolute floor rejects "nothing here matches"; a relative one (10% of the top hit) rejects
-"one strong match plus three also-rans". The sweep also found a case *no* threshold can
-fix: a question whose answer is a formula rendered as an image, on a slide titled "Exact
-formula for the convolution layer". The retriever is right to rank that passage highly —
-retrieval relevance and answer presence are different properties, so the threshold handles
-one and claim verification handles the other.
+The reranker survived, but not for the reason I expected. Accuracy was within noise; what
+it did was cut retrieved context by 62% at the same recall.
 
-**Chunk size is capped by the embedding model, not chosen freely.** MiniLM reads 256
-tokens and silently truncates; prose chunks target 400–800. That forced the switch to
-`bge-base` (512-token window) *before* ingest, when it cost one `DROP TABLE` instead of a
-full re-embed.
+## Running it
 
----
+You need your own LLM API key. Any OpenAI-compatible endpoint works: DeepSeek, Gemini, or
+a local Ollama. The embedding and reranking models run locally and need no key.
 
-## Quickstart
+```bash
+cp .env.example .env          # fill in LLM_API_KEY
+mkdir -p data/raw/CS5242      # put lecture PDFs here
+
+docker compose up --build -d
+docker compose run --rm app python scripts/ingest.py
+```
+
+Then open http://localhost:8000. The first run downloads about 900 MB of models.
+
+Against your own Postgres instead of the bundled one:
 
 ```bash
 uv sync
-cp .env.example .env                          # DATABASE_URL, LLM_*, JUDGE_*
 psql "$DATABASE_URL" -f studyrag/db/schema.sql
-
-# drop PDFs into data/raw/<COURSE_CODE>/
-uv run python scripts/ingest.py --dry-run     # inspect chunking; no model, no DB
 uv run python scripts/ingest.py
-uv run python evals/run_eval.py               # writes evals/latest_results.json
+uv run uvicorn studyrag.api:app --reload
+uv run python evals/run_eval.py         # ask mode, against the golden set
+uv run python evals/run_quiz_eval.py    # quiz mode, one quiz per lecture
 ```
 
-Ingest is idempotent — files are identified by SHA-256 of their bytes, so an unchanged
-file costs one read and one `SELECT`.
+Re-running ingest skips unchanged files by hashing their bytes. Use `--force` after
+changing the chunker or the embedding model, which invalidate stored rows without
+changing any file.
 
-**Stack:** Python 3.12 (uv) · Postgres + pgvector (Supabase) · sentence-transformers
-(`bge-base-en-v1.5` embedder, `bge-reranker-base` cross-encoder, both local) ·
-DeepSeek via an OpenAI-compatible client · ragas. No LangChain or LlamaIndex in the
-retrieval path — that logic is the point of the project, and a framework would hide it.
+**Stack:** Python 3.12, FastAPI, Postgres + pgvector, sentence-transformers
+(`bge-base-en-v1.5` and `bge-reranker-base`, both local), DeepSeek, ragas. No LangChain or
+LlamaIndex in the retrieval path, since that code is the part I wanted to understand.
 
----
+## Limits
 
-## Known gaps
+- Three lectures of one course. Every number here rests on 171 chunks.
+- Cross-lecture retrieval doesn't work (recall 0.200). Every fix I tried measured worse.
+- Grounded is not the same as correct. One slide says the MLP was introduced by Rosenblatt
+  in 1957, which is wrong. The system repeats it faithfully, with a citation, so you can
+  catch it.
+- Formulas and diagrams are images. Their labels either don't extract at all or extract
+  with no reading order, and the system can't tell that from material it simply lacks.
+- Only slide decks. Tutorials and textbooks need different chunking and a `doc_type`
+  filter on retrieval, neither written yet.
+- Judge scores move about ±0.02 between identical runs on the ask eval. Quiz is noisier:
+  at 8 questions per lecture, one question shifts the mean by 0.10.
 
-- **One document.** Every number above comes from a single lecture deck.
-- **`answer_relevancy` is not a trustworthy gate at n=10.** ±0.05 across runs on
-  unchanged code. More golden questions, not more prompt tuning.
-- **The claim verifier is blunt.** Word overlap plus a regex is provenance checking, not
-  entailment — blind to negation and word order. The reranker is already loaded and is
-  the right model to replace it with.
-- **Judge and generator are the same model** (`deepseek-chat`), which risks
-  self-preference bias. Lower risk for mechanical entailment checks than for subjective
-  quality, but unmeasured. The fix is hand-labelling a subset and a second judge from
-  another family.
-- **Only the `slides` chunking strategy exists.** `prose` and `questions` are stubbed with
-  their design written; other types raise rather than silently producing one useless
-  5000-token chunk.
-- **No `doc_type` filter on retrieval.** Harmless with one document type, a correctness
-  bug the moment tutorial questions are ingested.
-- **No hybrid search.** Deferred deliberately: `tsv` is a generated column that backfills
-  itself, so it can be measured against this baseline rather than added on faith. Recall
-  near 1.0 says there's no headroom on *this* golden set — and every question in it is
-  conceptual, none is the exact-token lookup (`LeNet-5`, `ReLU`) where lexical search
-  wins. So the golden set, not the retriever, is what needs fixing first.
-- **Formula images have no text layer**, so retrieval cannot reach the actual equations.
-  Faithfulness is not correctness.
-- **Judge noise is ±0.02** between identical runs. Small movements aren't signal.
+## Next
 
-## Roadmap
-
-Expand the golden set (n=30, including lexical questions) so the metrics become
-trustworthy → replace the word-overlap verifier with the cross-encoder already loaded →
-hybrid (RRF), measured against this baseline → Quiz mode → `questions`/`prose` chunking
-for tutorials and textbooks → Exam mode's agent loop → per-course monitor page.
+Chunking for tutorials and textbooks, with the `doc_type` filter that has to come with
+them. Then exam question prediction, grounded in tutorial sheets where past papers don't
+exist.

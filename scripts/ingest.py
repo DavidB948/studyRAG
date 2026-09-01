@@ -15,7 +15,7 @@ import sys
 from studyrag.db.writer import connect, find_duplicate, upsert_chunks, upsert_document
 from studyrag.embed import count_tokens as model_count_tokens
 from studyrag.embed import embed_passages
-from studyrag.ingest.chunker import chunk_document, detect_lecture, parse_slide
+from studyrag.ingest.chunker import breadcrumb, chunk_document, detect_lecture, parse_slide
 from studyrag.ingest.loaders import discover, identify, load
 from studyrag.types import RawDoc
 
@@ -37,6 +37,11 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--course", help="only ingest this course directory")
     parser.add_argument("--dry-run", action="store_true", help="chunk only; no embed, no write")
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="re-ingest unchanged files; needed after a chunker or embedder change",
+    )
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
@@ -57,9 +62,14 @@ def main() -> int:
         # unchanged file costs one read and one SELECT rather than a full parse.
         course, doc_path, content_hash = identify(path)
 
+        # The duplicate check identifies the FILE, but the rows also depend on the
+        # chunker and the embedding model. Change either and every stored chunk is
+        # stale while its file is untouched, so --force re-ingests unchanged files.
+        # What --force must NOT do is push a second copy of the same bytes under a new
+        # name: that hits UNIQUE (course, content_hash) as an unhandled error mid-run.
         if conn is not None:
             existing = find_duplicate(conn, course, content_hash)
-            if existing is not None:
+            if existing is not None and not (args.force and existing == doc_path):
                 log.info("skip %s: same bytes already ingested as %s", doc_path, existing)
                 skipped += 1
                 continue
@@ -82,7 +92,7 @@ def main() -> int:
         # One transaction per document: a failure here must not roll back the run.
         with conn.transaction():
             document_id = upsert_document(conn, doc, _lecture_of(doc))
-            upsert_chunks(conn, document_id, chunks, embed_passages([c.content for c in chunks]))
+            upsert_chunks(conn, document_id, chunks, embed_passages([breadcrumb(c) for c in chunks]))
         ingested += 1
 
     if conn is not None:

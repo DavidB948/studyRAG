@@ -4,16 +4,20 @@ Small-to-big. Slides average ~60 tokens, so a single hit is precise but thin;
 embedding whole sections instead would average several ideas into one vector and
 match everything weakly. So: embed per slide, expand at read time.
 
-Every query filters by course. That is an invariant, not an option — see CLAUDE.md.
+Every query filters by course. That is an invariant of this system, not an option.
 """
 
 from __future__ import annotations
+
+import logging
 
 import psycopg
 from pydantic import BaseModel
 
 from studyrag.embed import embed_query
 from studyrag.rerank import score as rerank_score
+
+log = logging.getLogger(__name__)
 
 # Stage 1 casts wide: the bi-encoder only has to get the right chunk into the
 # candidate set, and the cross-encoder decides the order. Recall matters here,
@@ -23,6 +27,14 @@ DEFAULT_MAX_PASSAGES = 4
 
 # Fallback context when a chunk has no section (title slides, decks with no Outline).
 WINDOW_RADIUS = 1
+
+# NOT a cross-lecture diversity slot. One was implemented here and removed: it never
+# fired, because the second lecture's best chunk scores BELOW the absolute floor, not
+# merely below the relative one (0.004 and 0.008 against top hits of 0.931 and 0.714).
+# The cross-encoder scores (whole question, chunk), and a chunk answering half a
+# two-part question is genuinely only half-relevant — so the signal a diversity slot
+# would select on does not exist. The fix is query decomposition: score each
+# sub-question against the material that answers it.
 
 # Loose cosine prefilter only. It is deliberately permissive: stage 1 exists to
 # build a candidate set, and anything it discards the reranker never sees.
@@ -54,7 +66,12 @@ MIN_RERANK_SCORE = 0.02
 # 0.10 where the cosine version used 0.85, because the multiplier is scale-dependent:
 # cosine was compressed into ~0.4-0.8, while reranker scores span 0.0000-0.9969. At
 # 0.85 a top hit of 0.96 would set a floor of 0.82 and discard everything else.
-RELATIVE_FLOOR = 0.10
+#
+# Lowered 0.10 -> 0.03 after the multi_section eval slice scored recall 0.700. The gate
+# was backwards for multi-hop: a very strong top hit RAISES the bar for every other
+# section, so the better the first answer, the harder it is for a legitimate second one
+# to survive. Both cut sections were above the absolute floor.
+RELATIVE_FLOOR = 0.03
 
 
 class Hit(BaseModel):
@@ -92,15 +109,25 @@ class Passage(BaseModel):
 # --- SQL: given, not TODO ------------------------------------------------------
 
 def vector_search(
-    conn: psycopg.Connection, course: str, query_vector: list[float], k: int
+    conn: psycopg.Connection,
+    course: str,
+    query_vector: list[float],
+    k: int,
+    lecture: str | None = None,
 ) -> list[Hit]:
-    """Top-k chunks by cosine similarity, within one course.
+    """Top-k chunks by cosine similarity, within one course and optionally one lecture.
 
     `<=>` is pgvector's cosine DISTANCE operator (0 = identical), and it is the
     operator the HNSW index was built for. Similarity is 1 - distance.
 
-    The course filter is inside the SQL, never applied afterwards in Python: a
+    Both filters are inside the SQL, never applied afterwards in Python: a
     post-filter would let another course's rows consume the top-k slots first.
+
+    `lecture` is filtered through the join rather than copied onto chunks. EXPLAIN
+    says the copy buys nothing here: at this corpus size Postgres skips the HNSW
+    index and sorts exactly, so neither form of the filter touches the vector index.
+    That stops being true once the planner starts choosing the ANN scan, and the
+    answer then is a partial index, not a duplicated column.
     """
     rows = conn.execute(
         """
@@ -110,10 +137,11 @@ def vector_search(
         FROM chunks c
         JOIN documents d ON d.id = c.document_id
         WHERE c.course = %(course)s
+          AND (%(lecture)s::text IS NULL OR d.lecture = %(lecture)s)
         ORDER BY c.embedding <=> %(q)s::vector
         LIMIT %(k)s
         """,
-        {"q": query_vector, "course": course, "k": k},
+        {"q": query_vector, "course": course, "k": k, "lecture": lecture},
     ).fetchall()
 
     return [
@@ -221,8 +249,15 @@ def retrieve(
     k: int = DEFAULT_K,
     max_passages: int = DEFAULT_MAX_PASSAGES,
     min_score: float = MIN_RERANK_SCORE,
+    lecture: str | None = None,
 ) -> list[Passage]:
     """Embed the query, search wide, rerank, expand.
+
+    Query decomposition was tried here and removed: splitting a two-part question and
+    scoring each part separately raised cross-lecture PRECISION 0.367 -> 0.533 but left
+    RECALL at 0.267, while regressing multi_section precision and abstention
+    faithfulness. It made two-hop retrieval cleaner without making it more complete, and
+    cost an LLM call on every query.
 
     Two stages because neither model can do both jobs: the bi-encoder is fast enough
     to search but compresses each passage before the query exists, and the
@@ -230,12 +265,13 @@ def retrieve(
     Cheap-and-wide, then expensive-and-narrow.
 
     `course` is a required argument with no default: a retrieval with no course
-    scope is a bug, not a broad search.
+    scope is a bug, not a broad search. `lecture` is the opposite — optional, because
+    searching a whole course is a legitimate thing to want.
 
     An empty list is a real answer — "this corpus does not cover that" — and the
     caller must handle it rather than treating it as an error.
     """
-    hits = vector_search(conn, course, embed_query(query), k)
+    hits = vector_search(conn, course, embed_query(query), k, lecture)
     if not hits:
         return []
 

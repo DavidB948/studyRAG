@@ -26,9 +26,10 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from evals.judge import judge as _judge
 from studyrag.config import settings
 from studyrag.db.writer import connect
-from studyrag.modes.overview import explain
+from studyrag.modes.ask import answer_question
 
 log = logging.getLogger("eval")
 
@@ -58,26 +59,6 @@ class LocalEmbeddings:
         return embed_query(text)
 
 
-def _judge():
-    """The judge model, wrapped for ragas.
-
-    Deliberately not the smallest available model: ragas decomposes an answer into
-    claims and rules on each, so a weak judge produces scores too noisy to act on.
-    The judge is part of the eval's own failure surface.
-    """
-    from langchain_openai import ChatOpenAI
-    from ragas.llms import LangchainLLMWrapper
-
-    return LangchainLLMWrapper(
-        ChatOpenAI(
-            model=settings.judge_model or settings.llm_model or "",
-            api_key=settings.judge_api_key or settings.llm_api_key,
-            base_url=settings.judge_base_url or settings.llm_base_url,
-            temperature=0.0,  # a judge must be reproducible
-        )
-    )
-
-
 def run() -> dict[str, Any]:
     from ragas import EvaluationDataset, evaluate
     from ragas.embeddings import LangchainEmbeddingsWrapper
@@ -98,11 +79,25 @@ def run() -> dict[str, Any]:
 
     for item in gold:
         course, question = item["course"], item["question"]
-        result = explain(conn, course, question)
+        try:
+            result = answer_question(conn, course, question)
+        except Exception as exc:  # noqa: BLE001 - one bad response must not lose the run
+            # A malformed model response used to abort the entire eval, losing every
+            # score computed so far. Record it as a failure and continue: a generation
+            # failure is a result, not a reason to have no results.
+            log.error("%s failed: %s", item["id"], exc)
+            per_question.append(
+                {"id": item["id"], "course": course, "type": "error", "error": str(exc)[:200]}
+            )
+            continue
         answer = " ".join(c.text for c in result.claims)
         contexts = [p.content for p in result.passages]
 
-        if item["reference"] == NOT_IN_CORPUS:
+        # Trust `kind` as well as the sentinel: a drafted question is routed by what it
+        # IS, not by whether the drafting model happened to phrase the reference the
+        # exact way this harness matches on. Getting this wrong sends an unanswerable
+        # question to ragas, where the metrics assume an answer exists.
+        if item["reference"] == NOT_IN_CORPUS or item.get("kind") == "unanswerable":
             # Correct behaviour is naming the gap, not staying silent. Every surviving
             # claim is already quote-verified against its passage, so a related grounded
             # fact alongside an admitted gap is a better answer than nothing — demanding
@@ -146,7 +141,20 @@ def run() -> dict[str, Any]:
                 "reference": item["reference"],
             }
         )
-        per_question.append({"id": item["id"], "course": course, "type": "ragas"})
+        per_question.append(
+            {
+                "id": item["id"],
+                "course": course,
+                "type": "ragas",
+                "kind": item.get("kind", "conceptual"),
+            }
+        )
+
+    if not samples:
+        # ragas evaluate() raises on an empty dataset, which would bury the reason.
+        failures = [q for q in per_question if q["type"] == "error"]
+        first = failures[0]["error"] if failures else "no answerable questions in the set"
+        raise SystemExit(f"nothing to score: {len(failures)} question(s) errored. First: {first}")
 
     judge = _judge()
     embeddings = LangchainEmbeddingsWrapper(LocalEmbeddings())  # type: ignore[arg-type]
@@ -215,14 +223,38 @@ def run() -> dict[str, Any]:
             "below_threshold": [m for m, v in metrics.items() if v < THRESHOLD],
         }
 
+    # Per-kind, because an average over mixed query types hides both directions: a
+    # lexical weakness that dense retrieval is known for disappears into a mean
+    # dominated by conceptual questions it handles well.
+    by_kind: dict[str, Any] = {}
+    for kind in {i.get("kind") for i in ragas_items}:
+        rows = [i for i in ragas_items if i.get("kind") == kind]
+        by_kind[str(kind)] = {
+            "n": len(rows),
+            # None, not 0.0, when every question in the kind failed to score: a
+            # missing measurement and a measured zero must not read the same.
+            **{
+                m: _mean_or_none([r.get(m, float("nan")) for r in rows])
+                for m in ("faithfulness", "answer_relevancy",
+                          "llm_context_precision_with_reference", "context_recall")
+            },
+        }
+
     return {
         "run_at": datetime.now(UTC).isoformat(),
+        "by_kind": by_kind,
         "embed_model": settings.embed_model,
         "judge_model": settings.judge_model or settings.llm_model,
         "threshold": THRESHOLD,
         "by_course": by_course,
         "per_question": per_question,
     }
+
+
+def _mean_or_none(values: list[float]) -> float | None:
+    """Mean over the values that scored, or None when none of them did."""
+    scored = [v for v in values if not math.isnan(v)]
+    return round(sum(scored) / len(scored), 4) if scored else None
 
 
 def main() -> int:
@@ -249,6 +281,16 @@ def main() -> int:
             mark = "PASS" if value >= THRESHOLD else "FAIL"
             print(f"  {'abstention_faithfulness':42s} {value:.3f}  {mark}")
         failed |= bool(data["below_threshold"])
+
+    print("\nby question kind:")
+    print(f"  {'kind':14s} {'n':>3s}  {'faith':>6s} {'relev':>6s} {'prec':>6s} {'recall':>6s}")
+    for kind, d in sorted(results["by_kind"].items()):
+        cells = " ".join(
+            f"{d[m]:6.3f}" if d[m] is not None else f"{'  n/a':>6s}"
+            for m in ("faithfulness", "answer_relevancy",
+                      "llm_context_precision_with_reference", "context_recall")
+        )
+        print(f"  {kind:14s} {d['n']:3d}  {cells}")
 
     print(f"\nwrote {RESULTS}")
     return 1 if failed else 0

@@ -1,7 +1,7 @@
 """RawDoc -> list[Chunk]. One slide becomes one chunk (small-to-big).
 
 Structure here is positional, not typographic: the corpus has no markdown
-headings and its numbering is noise. See DECISIONS.md.
+headings and its numbering is noise.
 """
 
 from __future__ import annotations
@@ -28,6 +28,13 @@ FOOTER_MIN_SHARE = 0.6
 # Such a chunk still costs an embedding and can still surface in top-k, where it
 # displaces something useful. Tuned by inspection, not by theory.
 MIN_TOKENS = 15
+
+# Above this a chunk exceeds the embedding model's input window and its tail is
+# silently dropped from the vector — no error, no symptom, just worse recall on the
+# part that was cut. One slide was one chunk safely at ~60 tokens on the first deck;
+# dense backpropagation and code slides run to 950. Left under the real 512-token
+# window so the breadcrumb prefix added at embedding time also fits.
+MAX_TOKENS = 450
 
 
 def _strip_page_no(line: str) -> str:
@@ -103,6 +110,36 @@ def assign_sections(slides: list[Slide]) -> list[Slide]:
     return out
 
 
+def split_oversized(
+    title: str | None, body: str, count_tokens: Callable[[str], int]
+) -> list[str]:
+    """Split a slide that exceeds the model window, on line boundaries.
+
+    The title is repeated on every part: each part is embedded independently, so a
+    part that loses the title loses the only clue to what it is about.
+
+    Lines, not sentences, because slide bodies are bullets and code rather than
+    prose — a sentence splitter would cut mid-expression. A single line longer than
+    the window is left whole and will still truncate; splitting inside a line would
+    produce a fragment that means nothing on its own.
+    """
+    prefix = f"{title}\n" if title else ""
+    parts: list[str] = []
+    current: list[str] = []
+
+    for line in body.splitlines():
+        candidate = current + [line]
+        if current and count_tokens(prefix + "\n".join(candidate)) > MAX_TOKENS:
+            parts.append(prefix + "\n".join(current))
+            current = [line]
+        else:
+            current = candidate
+
+    if current:
+        parts.append(prefix + "\n".join(current))
+    return parts
+
+
 def detect_lecture(slides: list[Slide]) -> str | None:
     """Pull the lecture identifier off the title slide, e.g. "Lecture 5"."""
     if not slides:
@@ -112,7 +149,9 @@ def detect_lecture(slides: list[Slide]) -> str | None:
     return match.group(0) if match else None
 
 
-def chunk_slides(doc: RawDoc, count_tokens: Callable[[str], int]) -> list[Chunk]:
+def chunk_slides(
+    doc: RawDoc, count_tokens: Callable[[str], int], footer: str | None = None
+) -> list[Chunk]:
     """One page is one chunk. No text is ever cut — only dropped.
 
     PyPDF already split the file at page boundaries, and for a deck those
@@ -122,7 +161,8 @@ def chunk_slides(doc: RawDoc, count_tokens: Callable[[str], int]) -> list[Chunk]
     `page` is the printed slide number; `ordinal` is the position after markers
     and duplicates are dropped, so the two deliberately diverge.
     """
-    footer = detect_footer(doc.pages)
+    if footer is None:  # `""` is a real answer: this deck has no footer
+        footer = detect_footer(doc.pages)
     slides = assign_sections(
         [parse_slide(page, i, footer) for i, page in enumerate(doc.pages, start=1)]
     )
@@ -140,21 +180,30 @@ def chunk_slides(doc: RawDoc, count_tokens: Callable[[str], int]) -> list[Chunk]
             continue  # slides 28-30 are byte-identical; keep the first
         seen.add(content)
 
-        token_count = count_tokens(content)
-        if token_count < MIN_TOKENS:
-            continue  # "Questions?", title cards, stray figure labels
+        if count_tokens(content) <= MAX_TOKENS:
+            parts = [content]
+        else:
+            parts = split_oversized(slide.title, slide.body, count_tokens)
 
-        chunks.append(
-            Chunk(
-                course=doc.course,
-                lecture=lecture,
-                section=slide.section,
-                ordinal=len(chunks),  # dense, unlike page
-                page=slide.page,
-                content=content,
-                token_count=token_count,
+        for part in parts:
+            token_count = count_tokens(part)
+            # MIN_TOKENS rejects whole slides that carry no content. A split slide
+            # already proved it has plenty, so its short tail is real text, not a
+            # title card, and dropping it would cut the slide mid-thought.
+            if len(parts) == 1 and token_count < MIN_TOKENS:
+                continue  # "Questions?", title cards, stray figure labels
+
+            chunks.append(
+                Chunk(
+                    course=doc.course,
+                    lecture=lecture,
+                    section=slide.section,
+                    ordinal=len(chunks),  # dense, unlike page
+                    page=slide.page,      # several chunks can share a page now
+                    content=part,
+                    token_count=token_count,
+                )
             )
-        )
 
     return chunks
 
@@ -230,7 +279,8 @@ def chunk_document(doc: RawDoc, count_tokens: Callable[[str], int]) -> list[Chun
 def breadcrumb(chunk: Chunk) -> str:
     """Text actually fed to the embedder: hierarchy prefix, then content.
 
-    Given, not TODO — it defines the contract Phase 3 relies on.
+    A slide body often names its topic only in the deck title ("Backpropagation")
+    and never again, so the raw chunk embeds without the one word a query uses.
     """
     trail = [chunk.course, chunk.lecture, chunk.section]
     prefix = " > ".join(t for t in trail if t)

@@ -22,7 +22,7 @@ PATTERNS = {
     "markdown_setext": re.compile(r"^[=-]{3,}\s*$"),           # underlined heading
     "numbered":        re.compile(r"^\d+(\.\d+)*[.)]?\s+\S"),  # 4.2 Dynamic Programming
     "all_caps":        re.compile(r"^[A-Z][A-Z0-9 \-&/(),.]{4,60}$"),
-    "keyword":         re.compile(r"^(chapter|lecture|week|topic|section|part)\b", re.I),
+    "keyword":         re.compile(r"^(chapter|lecture|week|topic|section|part)\b", re.IGNORECASE),
     "bullet":          re.compile(r"^\s*[-*•]\s+\S"),
     "page_marker":     re.compile(r"^<!-- page \d+ -->$"),
 }
@@ -30,7 +30,7 @@ PATTERNS = {
 # LaTeXiT embeds the source of every formula image as an invisible text blob.
 # On a Beamer deck these can be >90% of the extracted characters, which would
 # swamp both the pattern counts and the raw sample below.
-LATEXIT = re.compile(r"<latexit.*?</latexit>", re.S)
+LATEXIT = re.compile(r"<latexit.*?</latexit>", re.DOTALL)
 
 
 def read_text(path: Path) -> str:
@@ -50,7 +50,7 @@ def inspect(path: Path) -> None:
     rel = path.relative_to(CORPUS)
     try:
         raw = read_text(path)
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 - a corpus probe must survive any bad file
         print(f"\n{rel}\n  FAILED: {type(exc).__name__}: {exc}")
         return
 

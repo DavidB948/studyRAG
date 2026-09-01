@@ -1,4 +1,4 @@
-"""Overview mode: explain a concept from the student's own material.
+"""Ask mode: answer a question from the student's own material.
 
 Plain RAG — retrieve, then generate. The orchestration is deliberately thin; all
 the retrieval judgement lives in retrieve.py and all the wording in prompts.py.
@@ -12,8 +12,9 @@ import re
 import psycopg
 from pydantic import BaseModel
 
+from studyrag.grounding import quote_supported
 from studyrag.llm import complete_json
-from studyrag.prompts import NO_CONTEXT, OVERVIEW_SYSTEM, OVERVIEW_USER
+from studyrag.prompts import ASK_SYSTEM, ASK_USER, NO_CONTEXT
 from studyrag.retrieve import Passage, retrieve
 
 log = logging.getLogger(__name__)
@@ -27,7 +28,7 @@ class Claim(BaseModel):
     supporting_quote: str
 
 
-class OverviewResponse(BaseModel):
+class AskResponse(BaseModel):
     """Raw model output, before citations are resolved."""
 
     claims: list[Claim]
@@ -45,11 +46,12 @@ class GroundedClaim(BaseModel):
     citation: str
 
 
-class Overview(BaseModel):
+class Answer(BaseModel):
     """What a caller gets. Grounded and generated stay separate all the way out."""
 
     question: str
     course: str
+    lecture: str | None = None
 
     # Grounded: every claim is quote-verified against its cited passage, and this is
     # the only field ragas faithfulness is scored over.
@@ -77,13 +79,6 @@ class Overview(BaseModel):
         return " ".join(c.text for c in self.claims)
 
 
-# A quote must share at least this share of its words with the cited passage.
-# Exact substring matching was too strict: the model re-punctuates and re-wraps as it
-# copies, so correct, grounded claims were being dropped. Word overlap tolerates that
-# drift while still failing a quote the model invented, which shares little with any
-# passage. Deliberately a blunt instrument — a cross-encoder would judge this properly.
-QUOTE_OVERLAP = 0.75
-
 # A claim that talks ABOUT the context rather than stating something FROM it.
 # Word overlap cannot catch these — "the passage does not give the formula" shares most
 # of its words with the passage — and they are not claims at all: they belong in
@@ -98,21 +93,6 @@ META_CLAIM = re.compile(
 )
 
 
-def _words(text: str) -> list[str]:
-    return re.findall(r"[a-z0-9]+", text.lower())
-
-
-def _quote_supported(quote: str, passage: str) -> bool:
-    """Is this quote actually drawn from this passage?"""
-    quoted = _words(quote)
-    if not quoted:
-        return False
-    if " ".join(quoted) in " ".join(_words(passage)):
-        return True  # exact after normalisation; the common case
-    present = set(_words(passage))
-    return sum(w in present for w in quoted) / len(quoted) >= QUOTE_OVERLAP
-
-
 def _format_passages(passages: list[Passage]) -> str:
     """Number the passages so the model can reference them by index."""
     return "\n\n".join(
@@ -120,22 +100,27 @@ def _format_passages(passages: list[Passage]) -> str:
     )
 
 
-def explain(conn: psycopg.Connection, course: str, question: str) -> Overview:
+def answer_question(
+    conn: psycopg.Connection, course: str, question: str, lecture: str | None = None
+) -> Answer:
     """Retrieve, then explain. Citations are resolved here, never by the model.
 
     An out-of-range passage_index means the model invented a source, so the claim
     is dropped rather than shown with a guessed citation. A bounds check catches
     that; a hallucinated filename would not be caught by anything.
     """
-    passages = retrieve(conn, course, question)
+    passages = retrieve(conn, course, question, lecture=lecture)
 
     if not passages:
-        return Overview(question=question, course=course, claims=[], not_covered=NO_CONTEXT)
+        return Answer(
+            question=question, course=course, lecture=lecture,
+            claims=[], not_covered=NO_CONTEXT,
+        )
 
     response = complete_json(
-        system=OVERVIEW_SYSTEM,
-        user=OVERVIEW_USER.format(question=question, passages=_format_passages(passages)),
-        schema=OverviewResponse,
+        system=ASK_SYSTEM,
+        user=ASK_USER.format(question=question, passages=_format_passages(passages)),
+        schema=AskResponse,
     )
 
     claims: list[GroundedClaim] = []
@@ -153,15 +138,16 @@ def explain(conn: psycopg.Connection, course: str, question: str) -> Overview:
             continue
 
         passage = passages[claim.passage_index]
-        if not _quote_supported(claim.supporting_quote, passage.content):
+        if not quote_supported(claim.supporting_quote, passage.content):
             log.warning("dropping unverified claim: %s", claim.text[:80])
             continue
 
         claims.append(GroundedClaim(text=claim.text, citation=passage.citation()))
 
-    return Overview(
+    return Answer(
         question=question,
         course=course,
+        lecture=lecture,
         claims=claims,
         analogy=response.analogy,
         exam_angle=response.exam_angle,

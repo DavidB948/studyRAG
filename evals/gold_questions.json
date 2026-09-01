@@ -4,83 +4,231 @@
     "course": "CS5242",
     "question": "What are the main practical limitations of Multi-Layer Perceptrons (MLPs) when applied to structured data?",
     "reference": "MLPs are practically very hard to train because they have too many parameters and take too long. They are also prone to overfitting and do not generalize well.",
-    "section": "Data structure"
+    "section": "Data structure",
+    "kind": "conceptual"
   },
   {
     "id": "cs5242-02",
     "course": "CS5242",
     "question": "Who introduced the Neocognitron algorithm, and how did it model biological reception fields?",
     "reference": "The Neocognitron was introduced by Fukushima in 1987 as the first algorithm implementing Hubel and Wiesel's visual recognition system. It introduced local features by cascading simple and complex cells (V1 and V2 cells) to form a hierarchical organization.",
-    "section": "Local reception fields"
+    "section": "Local reception fields",
+    "kind": "conceptual"
   },
   {
     "id": "cs5242-03",
     "course": "CS5242",
     "question": "Why is template matching with a single template ineffective for detecting uncentered handwritten digits?",
     "reference": "A single template is only useful for one specific location. If images are not well centered, it becomes intractable to design a pattern template for all possible locations in the image.",
-    "section": "Local reception fields"
+    "section": "Local reception fields",
+    "kind": "conceptual"
   },
   {
     "id": "cs5242-04",
     "course": "CS5242",
     "question": "What key discovery about V1 cells in the primary visual cortex was made by Hubel and Wiesel in 1959?",
     "reference": "Hubel and Wiesel discovered that the visual cortex is composed of receptive fields called V1 cells containing neurons that activate depending on local orientation.",
-    "section": "Local reception fields"
+    "section": "Local reception fields",
+    "kind": "conceptual"
   },
   {
     "id": "cs5242-05",
     "course": "CS5242",
     "question": "What does it mean for image data to be compositional according to the lecture slides?",
     "reference": "Image data is compositional because it is formed from hierarchical local stationary patterns, where simple patterns compose to form abstract complex concepts.",
-    "section": "Modeling of hierarchical organization"
+    "section": "Modeling of hierarchical organization",
+    "kind": "conceptual"
   },
   {
     "id": "cs5242-06",
     "course": "CS5242",
     "question": "How can 3x3 templates capture multi-scale features across layers in a ConvNet?",
     "reference": "Multi-scale features are captured by applying 3x3 templates at different image resolutions. When projected back to the original image resolution, templates learned at lower resolutions correspond to larger receptive fields such as 5x5 or 7x7.",
-    "section": "Modeling of hierarchical organization"
+    "section": "Modeling of hierarchical organization",
+    "kind": "conceptual"
   },
   {
     "id": "cs5242-07",
     "course": "CS5242",
     "question": "What two operations are used to change image resolution in hierarchical feature extraction?",
     "reference": "Image resolution is changed using down-sampling and pooling, such as max pooling or average pooling.",
-    "section": "Modeling of hierarchical organization"
+    "section": "Modeling of hierarchical organization",
+    "kind": "conceptual"
   },
   {
     "id": "cs5242-08",
     "course": "CS5242",
     "question": "How does a max pooling layer process activation maps in a one-layer ConvNet?",
     "reference": "The max pooling layer extracts the maximal activation value from each activation map.",
-    "section": "One-layer convolutional neural network"
+    "section": "One-layer convolutional neural network",
+    "kind": "conceptual"
   },
   {
     "id": "cs5242-09",
     "course": "CS5242",
     "question": "How did computer vision feature extraction differ before and after the introduction of deep learning?",
     "reference": "Before deep learning, computer vision relied on handcrafted features (such as SIFT) combined with separate classifiers like SVMs. With deep learning, network architectures like AlexNet automatically learn features together with the classifier.",
-    "section": "Paradigm shift in computer vision"
+    "section": "Paradigm shift in computer vision",
+    "kind": "conceptual"
   },
   {
     "id": "cs5242-10",
     "course": "CS5242",
     "question": "Which deep ConvNet architectures are specifically named in the slides as examples of stacking multiple convolutional and pooling layers?",
     "reference": "The slides list LeNet5, AlexNet, VGG, Inception, and ResNet as examples of deep ConvNets.",
-    "section": "Paradigm shift in computer vision"
+    "section": "Paradigm shift in computer vision",
+    "kind": "conceptual"
   },
   {
     "id": "cs5242-11",
     "course": "CS5242",
     "question": "What is the exact formula for computing the output shape of a convolution layer given padding and stride values?",
     "reference": "NOT_IN_CORPUS",
-    "section": null
+    "section": null,
+    "kind": "unanswerable"
   },
   {
     "id": "cs5242-12",
     "course": "CS5242",
     "question": "What is the mathematical formulation and function of Batch Normalization in deep CNNs?",
     "reference": "NOT_IN_CORPUS",
-    "section": null
+    "section": null,
+    "kind": "unanswerable"
+  },
+  {
+    "id": "cs5242-13",
+    "course": "CS5242",
+    "question": "What is the name of the algorithm introduced by Fukushima in 1987 that implements the Hubel-Wiesel visual recognition system?",
+    "reference": "The Neocognitron algorithm, introduced by Fukushima in 1987, implements the Hubel-Wiesel visual recognition system.",
+    "section": "Local reception fields",
+    "kind": "lexical"
+  },
+  {
+    "id": "cs5242-14",
+    "course": "CS5242",
+    "question": "In the lecture, which year is associated with Hubel and Wiesel's discovery about V1 cells?",
+    "reference": "Hubel and Wiesel discovered V1 cells in 1959.",
+    "section": "Local reception fields",
+    "kind": "lexical"
+  },
+  {
+    "id": "cs5242-15",
+    "course": "CS5242",
+    "question": "Which deep ConvNet architecture is mentioned as a breakthrough in 2012 for image recognition?",
+    "reference": "AlexNet made a breakthrough in 2012 in image recognition.",
+    "section": "Paradigm shift in computer vision",
+    "kind": "lexical"
+  },
+  {
+    "id": "cs5242-16",
+    "course": "CS5242",
+    "question": "What is the name of the feature extraction method proposed by Lowe in 1999, mentioned as the most cited paper in computer vision before deep learning?",
+    "reference": "SIFT, proposed by Lowe in 1999, is mentioned as the most cited paper in computer vision before deep learning.",
+    "section": "Paradigm shift in computer vision",
+    "kind": "lexical"
+  },
+  {
+    "id": "cs5242-17",
+    "course": "CS5242",
+    "question": "Which convolutional neural network architecture is listed as a precursor to CNNs, developed by LeCun, Bottou, Bengio, and Haffner in 1998?",
+    "reference": "The Neocognitron is a precursor of convolutional neural networks [LeCun, Bottou, Bengio, Haffner, 1998].",
+    "section": "Local reception fields",
+    "kind": "lexical"
+  },
+  {
+    "id": "cs5242-18",
+    "course": "CS5242",
+    "question": "What is the name of the cells in the second layer of the visual cortex that compose outputs of V1 neurons?",
+    "reference": "The second layer neurons are called V2 cells.",
+    "section": "Local reception fields",
+    "kind": "lexical"
+  },
+  {
+    "id": "cs5242-21",
+    "course": "CS5242",
+    "question": "What is the mathematical formulation of the cross-entropy loss used in the one-layer ConvNet?",
+    "reference": "NOT_IN_CORPUS",
+    "section": null,
+    "kind": "unanswerable"
+  },
+  {
+    "id": "cs5242-22",
+    "course": "CS5242",
+    "question": "How does the hierarchical organization of the visual cortex, as described by Hubel and Wiesel, relate to the concept of compositional data structure in images?",
+    "reference": "Hubel and Wiesel discovered that the visual cortex has a hierarchical organization with V1 cells detecting local orientations and V2 cells composing these into more complex patterns. This mirrors the compositional nature of image data, which is formed from hierarchical local stationary patterns, as stated in the slides.",
+    "section": "Local reception fields; Modeling of hierarchical organization",
+    "kind": "multi_section"
+  },
+  {
+    "id": "cs5242-23",
+    "course": "CS5242",
+    "question": "What is the connection between the Neocognitron's cascade of simple and complex cells and the use of 3x3 templates at multiple image resolutions in CNNs?",
+    "reference": "The Neocognitron cascades simple and complex cells (V1 and V2) to form a hierarchical organization of features. In CNNs, this is implemented by learning 3x3 templates at each image resolution, which when projected back across layers capture multi-scale features, thus mimicking the hierarchical feature extraction.",
+    "section": "Local reception fields; Modeling of hierarchical organization",
+    "kind": "multi_section"
+  },
+  {
+    "id": "cs5242-24",
+    "course": "CS5242",
+    "question": "How does the problem of uncentered handwritten digits illustrate the need for local features, and how does convolution with sliding templates solve this?",
+    "reference": "If handwritten digits are not centered, a single template cannot match all instances. Local features, detected by sliding small templates across the image via convolution, allow the network to recognize patterns regardless of location, as each local feature is detected independently.",
+    "section": "Local reception fields; One-layer convolutional neural network",
+    "kind": "multi_section"
+  },
+  {
+    "id": "cs5242-25",
+    "course": "CS5242",
+    "question": "How does the universal approximation theorem apply to MLPs, and why does the lecture argue that CNNs are more practical for image data despite this theoretical capability?",
+    "reference": "MLPs can theoretically learn any function (universal approximation theorem), but they are practically hard to train due to too many parameters, overfitting, and poor generalization. CNNs leverage the compositional and local structure of images, reducing parameters and improving generalization.",
+    "section": "Data structure; Paradigm shift in computer vision",
+    "kind": "multi_section"
+  },
+  {
+    "id": "cs5242-36",
+    "course": "CS5242",
+    "question": "What is the exact formula for the batch loss in mini-batch SGD?",
+    "reference": "NOT_IN_CORPUS",
+    "section": null,
+    "kind": "unanswerable"
+  },
+  {
+    "id": "cs5242-45",
+    "course": "CS5242",
+    "question": "How does the hierarchical organization of the visual cortex, as described in Lecture 5, relate to the need for multiple layers in MLPs as discussed in Lecture 4?",
+    "reference": "Lecture 5 explains that the visual cortex has a hierarchical organization where V1 cells detect local orientations and V2 cells compose these outputs to form higher-level features. Lecture 4 shows that a one-layer network is insufficient for hard classification problems like distinguishing small vs. large digits, requiring multiple layers to learn hierarchical features. Thus, the biological hierarchy motivates the use of deep networks to capture compositional patterns.",
+    "section": "Lecture 5: Local reception fields; Lecture 4: The importance of multiple layers",
+    "kind": "cross_lecture"
+  },
+  {
+    "id": "cs5242-46",
+    "course": "CS5242",
+    "question": "How do the concepts of local receptive fields from Lecture 5 and the need for non-linearities from Lecture 4 combine to explain the design of CNNs?",
+    "reference": "Lecture 5 introduces local receptive fields inspired by biology, which lead to convolution and pooling operations in CNNs. Lecture 4 emphasizes that non-linearities are crucial to prevent the network from degenerating into a linear model. Together, they show that CNNs use local operations with non-linear activations to extract hierarchical features efficiently.",
+    "section": "Lecture 5: Local reception fields; Lecture 4: The importance of non-linearities",
+    "kind": "cross_lecture"
+  },
+  {
+    "id": "cs5242-47",
+    "course": "CS5242",
+    "question": "How does the concept of compositional data structure from Lecture 5 support the argument in Lecture 4 that multiple layers are necessary for complex tasks?",
+    "reference": "Lecture 5 states that image data is compositional, formed from hierarchical local stationary patterns. Lecture 4 demonstrates that a one-layer network cannot solve hard classification problems because it cannot capture such hierarchical structure, while multiple layers can. Thus, the compositional nature of data necessitates deep architectures.",
+    "section": "Lecture 5: Modeling of hierarchical organization; Lecture 4: The importance of multiple layers",
+    "kind": "cross_lecture"
+  },
+  {
+    "id": "cs5242-48",
+    "course": "CS5242",
+    "question": "How does the biological inspiration of hierarchical feature extraction in Lecture 5 align with the mathematical motivation for non-linearities in Lecture 4?",
+    "reference": "Lecture 5 describes how the visual cortex builds hierarchical features from simple to complex cells. Lecture 4 explains that without non-linearities, a neural network collapses into a linear model, limiting its capacity to learn complex patterns. The biological hierarchy implies that each layer must perform non-linear transformations to capture increasingly abstract features.",
+    "section": "Lecture 5: Local reception fields; Lecture 4: The importance of non-linearities",
+    "kind": "cross_lecture"
+  },
+  {
+    "id": "cs5242-49",
+    "course": "CS5242",
+    "question": "How does the concept of local features from Lecture 5 address the limitation of MLPs mentioned in Lecture 4 regarding template matching?",
+    "reference": "Lecture 5 introduces local features and convolution to handle uncentered objects, avoiding the need for a single global template. Lecture 4 shows that MLPs struggle with tasks like classifying small vs. large digits because they rely on global pattern matching. Local features allow CNNs to detect patterns at multiple locations, overcoming this limitation.",
+    "section": "Lecture 5: Local reception fields; Lecture 4: The importance of multiple layers",
+    "kind": "cross_lecture"
   }
 ]

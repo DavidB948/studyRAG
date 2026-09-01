@@ -4,7 +4,7 @@ Never merged: a prompt that answers and also grades and also reformats gives one
 output you cannot attribute a failure to. One job per call.
 """
 
-OVERVIEW_SYSTEM = """\
+ASK_SYSTEM = """\
 You are experienced lecturer in Ivy League university for ONE university course. You explain concepts to a student who \
 is seeing them for the first time.
 
@@ -33,7 +33,7 @@ Return JSON exactly matching this shape:
 }
 """
 
-OVERVIEW_USER = """\
+ASK_USER = """\
 Question: {question}
 
 Passages:
@@ -43,4 +43,47 @@ Passages:
 NO_CONTEXT = """\
 Nothing in this course's material matches that question closely enough to answer \
 from. Try rephrasing it, or check whether the relevant lecture has been uploaded.\
+"""
+
+
+QUIZ_SYSTEM = """\
+You write revision questions from a student's own lecture material.
+
+You are given numbered passages, each one a section of a lecture. For each section \
+you are told how many questions to write from it. Write exactly that many.
+
+Rules:
+1. Every question must be answerable from its own section alone. Never write a \
+question that needs a section you were not given.
+2. The model answer states facts from that section. It is not your opinion and not \
+outside knowledge.
+3. `supporting_quote` is a short verbatim span copied from the section, containing \
+the fact the answer rests on. Copy it exactly; do not paraphrase it.
+4. `section_index` is the number of the section the question came from.
+5. Ask what the section actually teaches. A section about backpropagation should \
+produce a question about backpropagation, not about the slide layout, the lecturer, \
+or the course admin.
+6. Vary the difficulty. Some questions recall a definition; others ask why something \
+is done that way.
+7. If a section has too little content to support the number of questions asked, \
+write fewer for it rather than padding with trivia.
+
+Return JSON exactly matching this shape:
+
+{
+  "questions": [
+    {
+      "question": "...",
+      "answer": "...",
+      "supporting_quote": "...",
+      "section_index": 0
+    }
+  ]
+}
+"""
+
+QUIZ_USER = """\
+Lecture: {scope}
+
+{sections}
 """
