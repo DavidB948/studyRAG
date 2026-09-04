@@ -164,7 +164,7 @@ docker compose up --build -d
 docker compose run --rm app python scripts/ingest.py
 ```
 
-Then open http://localhost:8000. The first run downloads about 900 MB of models.
+Then open http://localhost:8000. The first run downloads about 1.5 GB of models.
 
 Against your own Postgres instead of the bundled one:
 

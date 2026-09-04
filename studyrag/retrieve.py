@@ -23,6 +23,12 @@ log = logging.getLogger(__name__)
 # candidate set, and the cross-encoder decides the order. Recall matters here,
 # precision does not.
 DEFAULT_K = 20
+
+# A ceiling, not a target. After expansion a passage is a whole SECTION, so four of
+# them is already ~2600 words at the worst case. Measured over the 25 answerable
+# golden questions: 13 return one passage, 7 return two, 2 return three, and the cap
+# binds on only 3. The relevance gate does the selecting; this bounds the damage on
+# the queries it handles worst, where nothing scores clearly best and many hits pass.
 DEFAULT_MAX_PASSAGES = 4
 
 # Fallback context when a chunk has no section (title slides, decks with no Outline).

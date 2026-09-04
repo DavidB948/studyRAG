@@ -19,7 +19,11 @@ from studyrag.config import settings
 
 @lru_cache(maxsize=1)
 def _model():
-    """Load on first use. ~420 MB, same size class as the embedder."""
+    """Load on first use. ~1.0 GB, about 2.5x the embedder.
+
+    bge-reranker-base is XLM-RoBERTa-base, whose 250k multilingual
+    vocab makes the embedding matrix alone larger than the whole bi-encoder.
+    """
     from sentence_transformers import CrossEncoder
 
     return CrossEncoder(settings().rerank_model)
