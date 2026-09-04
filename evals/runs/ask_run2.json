@@ -1,33 +1,33 @@
 {
-  "run_at": "2026-09-04T15:47:32.094760+00:00",
+  "run_at": "2026-09-04T15:44:36.654777+00:00",
   "by_kind": {
-    "cross_lecture": {
-      "n": 5,
-      "faithfulness": 0.8867,
-      "answer_relevancy": 0.767,
-      "llm_context_precision_with_reference": 0.0667,
-      "context_recall": 0.2
-    },
-    "multi_section": {
-      "n": 4,
-      "faithfulness": 1.0,
-      "answer_relevancy": 0.798,
-      "llm_context_precision_with_reference": 1.0,
-      "context_recall": 0.625
+    "conceptual": {
+      "n": 10,
+      "faithfulness": 0.9944,
+      "answer_relevancy": 0.8039,
+      "llm_context_precision_with_reference": 0.9333,
+      "context_recall": 1.0
     },
     "lexical": {
       "n": 6,
-      "faithfulness": 0.9167,
-      "answer_relevancy": 0.793,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.8211,
       "llm_context_precision_with_reference": 1.0,
       "context_recall": 1.0
     },
-    "conceptual": {
-      "n": 10,
-      "faithfulness": 0.975,
-      "answer_relevancy": 0.8054,
-      "llm_context_precision_with_reference": 0.9333,
-      "context_recall": 0.95
+    "multi_section": {
+      "n": 4,
+      "faithfulness": 0.9904,
+      "answer_relevancy": 0.7842,
+      "llm_context_precision_with_reference": 1.0,
+      "context_recall": 0.625
+    },
+    "cross_lecture": {
+      "n": 5,
+      "faithfulness": 0.8048,
+      "answer_relevancy": 0.7631,
+      "llm_context_precision_with_reference": 0.0667,
+      "context_recall": 0.2
     }
   },
   "embed_model": "BAAI/bge-base-en-v1.5",
@@ -40,10 +40,10 @@
       "abstention_rate": 1.0,
       "abstention_faithfulness": 1.0,
       "metrics": {
-        "faithfulness": 0.9473,
-        "answer_relevancy": 0.7936,
+        "faithfulness": 0.9572,
+        "answer_relevancy": 0.7967,
         "llm_context_precision_with_reference": 0.7867,
-        "context_recall": 0.76
+        "context_recall": 0.78
       },
       "scored": {
         "faithfulness": 25,
@@ -66,7 +66,7 @@
       "type": "ragas",
       "kind": "conceptual",
       "faithfulness": 1.0,
-      "answer_relevancy": 0.8487368645531493,
+      "answer_relevancy": 0.838958014671574,
       "llm_context_precision_with_reference": 0.3333333333,
       "context_recall": 1.0
     },
@@ -76,7 +76,7 @@
       "type": "ragas",
       "kind": "conceptual",
       "faithfulness": 1.0,
-      "answer_relevancy": 0.647994780475844,
+      "answer_relevancy": 0.6604057182211865,
       "llm_context_precision_with_reference": 0.9999999999,
       "context_recall": 1.0
     },
@@ -86,7 +86,7 @@
       "type": "ragas",
       "kind": "conceptual",
       "faithfulness": 1.0,
-      "answer_relevancy": 0.9129129836719175,
+      "answer_relevancy": 0.8689731207088025,
       "llm_context_precision_with_reference": 0.9999999999,
       "context_recall": 1.0
     },
@@ -96,7 +96,7 @@
       "type": "ragas",
       "kind": "conceptual",
       "faithfulness": 1.0,
-      "answer_relevancy": 0.7308552257176966,
+      "answer_relevancy": 0.734404436095303,
       "llm_context_precision_with_reference": 0.9999999999,
       "context_recall": 1.0
     },
@@ -105,7 +105,7 @@
       "course": "CS5242",
       "type": "ragas",
       "kind": "conceptual",
-      "faithfulness": 0.875,
+      "faithfulness": 1.0,
       "answer_relevancy": 0.9081783052313446,
       "llm_context_precision_with_reference": 0.9999999999,
       "context_recall": 1.0
@@ -118,7 +118,7 @@
       "faithfulness": 1.0,
       "answer_relevancy": 0.6648404470269929,
       "llm_context_precision_with_reference": 0.9999999999,
-      "context_recall": 0.5
+      "context_recall": 1.0
     },
     {
       "id": "cs5242-07",
@@ -126,7 +126,7 @@
       "type": "ragas",
       "kind": "conceptual",
       "faithfulness": 1.0,
-      "answer_relevancy": 0.7798047402101641,
+      "answer_relevancy": 0.7774256306580366,
       "llm_context_precision_with_reference": 0.9999999999,
       "context_recall": 1.0
     },
@@ -145,8 +145,8 @@
       "course": "CS5242",
       "type": "ragas",
       "kind": "conceptual",
-      "faithfulness": 0.875,
-      "answer_relevancy": 0.8915685918138433,
+      "faithfulness": 0.9444444444444444,
+      "answer_relevancy": 0.9166721403645726,
       "llm_context_precision_with_reference": 0.9999999999,
       "context_recall": 1.0
     },
@@ -165,7 +165,7 @@
       "course": "CS5242",
       "type": "abstention",
       "passed": true,
-      "n_claims": 0,
+      "n_claims": 2,
       "faithfulness": 1.0
     },
     {
@@ -173,7 +173,7 @@
       "course": "CS5242",
       "type": "abstention",
       "passed": true,
-      "n_claims": 2,
+      "n_claims": 7,
       "faithfulness": 1.0
     },
     {
@@ -182,7 +182,7 @@
       "type": "ragas",
       "kind": "lexical",
       "faithfulness": 1.0,
-      "answer_relevancy": 0.8748691644134166,
+      "answer_relevancy": 0.8742412835439985,
       "llm_context_precision_with_reference": 0.9999999999,
       "context_recall": 1.0
     },
@@ -192,7 +192,7 @@
       "type": "ragas",
       "kind": "lexical",
       "faithfulness": 1.0,
-      "answer_relevancy": 0.9535404846937426,
+      "answer_relevancy": 0.9513272663600233,
       "llm_context_precision_with_reference": 0.9999999999,
       "context_recall": 1.0
     },
@@ -212,7 +212,7 @@
       "type": "ragas",
       "kind": "lexical",
       "faithfulness": 1.0,
-      "answer_relevancy": 0.7882159196318851,
+      "answer_relevancy": 0.9124694375373709,
       "llm_context_precision_with_reference": 0.9999999999,
       "context_recall": 1.0
     },
@@ -221,8 +221,8 @@
       "course": "CS5242",
       "type": "ragas",
       "kind": "lexical",
-      "faithfulness": 0.5,
-      "answer_relevancy": 0.630718451850245,
+      "faithfulness": 1.0,
+      "answer_relevancy": 0.69078603601598,
       "llm_context_precision_with_reference": 0.9999999999,
       "context_recall": 1.0
     },
@@ -232,7 +232,7 @@
       "type": "ragas",
       "kind": "lexical",
       "faithfulness": 1.0,
-      "answer_relevancy": 0.8372179358965054,
+      "answer_relevancy": 0.8242546951000113,
       "llm_context_precision_with_reference": 0.9999999999,
       "context_recall": 1.0
     },
@@ -250,7 +250,7 @@
       "type": "ragas",
       "kind": "multi_section",
       "faithfulness": 1.0,
-      "answer_relevancy": 0.8688193093677715,
+      "answer_relevancy": 0.8811962014524877,
       "llm_context_precision_with_reference": 0.99999999995,
       "context_recall": 1.0
     },
@@ -260,7 +260,7 @@
       "type": "ragas",
       "kind": "multi_section",
       "faithfulness": 1.0,
-      "answer_relevancy": 0.6958411910969682,
+      "answer_relevancy": 0.6765612962026303,
       "llm_context_precision_with_reference": 0.99999999995,
       "context_recall": 0.5
     },
@@ -270,7 +270,7 @@
       "type": "ragas",
       "kind": "multi_section",
       "faithfulness": 1.0,
-      "answer_relevancy": 0.8259549086156218,
+      "answer_relevancy": 0.8144479508372987,
       "llm_context_precision_with_reference": 0.9999999999,
       "context_recall": 0.5
     },
@@ -279,9 +279,9 @@
       "course": "CS5242",
       "type": "ragas",
       "kind": "multi_section",
-      "faithfulness": 1.0,
-      "answer_relevancy": 0.8012385064381503,
-      "llm_context_precision_with_reference": 0.9999999999,
+      "faithfulness": 0.9615384615384616,
+      "answer_relevancy": 0.7644845767640073,
+      "llm_context_precision_with_reference": 0.99999999995,
       "context_recall": 0.5
     },
     {
@@ -289,7 +289,7 @@
       "course": "CS5242",
       "type": "abstention",
       "passed": true,
-      "n_claims": 3,
+      "n_claims": 4,
       "faithfulness": 1.0
     },
     {
@@ -297,8 +297,8 @@
       "course": "CS5242",
       "type": "ragas",
       "kind": "cross_lecture",
-      "faithfulness": 0.6,
-      "answer_relevancy": 0.824458014177114,
+      "faithfulness": 0.5,
+      "answer_relevancy": 0.8509254643501108,
       "llm_context_precision_with_reference": 0.0,
       "context_recall": 0.0
     },
@@ -307,8 +307,8 @@
       "course": "CS5242",
       "type": "ragas",
       "kind": "cross_lecture",
-      "faithfulness": 1.0,
-      "answer_relevancy": 0.7816144282155237,
+      "faithfulness": 0.8571428571428571,
+      "answer_relevancy": 0.7859961496062212,
       "llm_context_precision_with_reference": 0.0,
       "context_recall": 0.0
     },
@@ -318,7 +318,7 @@
       "type": "ragas",
       "kind": "cross_lecture",
       "faithfulness": 1.0,
-      "answer_relevancy": 0.7063725542834339,
+      "answer_relevancy": 0.6633612980748618,
       "llm_context_precision_with_reference": 0.0,
       "context_recall": 0.0
     },
@@ -327,7 +327,7 @@
       "course": "CS5242",
       "type": "ragas",
       "kind": "cross_lecture",
-      "faithfulness": 0.8333333333333334,
+      "faithfulness": 0.6666666666666666,
       "answer_relevancy": 0.7392393498819301,
       "llm_context_precision_with_reference": 0.0,
       "context_recall": 0.3333333333333333
@@ -338,7 +338,7 @@
       "type": "ragas",
       "kind": "cross_lecture",
       "faithfulness": 1.0,
-      "answer_relevancy": 0.7834403726207059,
+      "answer_relevancy": 0.7759453924744739,
       "llm_context_precision_with_reference": 0.3333333333,
       "context_recall": 0.6666666666666666
     }

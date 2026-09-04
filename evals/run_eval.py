@@ -46,6 +46,14 @@ class LocalEmbeddings:
 
     Using a different embedding model for the metric than for the system would
     measure agreement between two models rather than the system's own behaviour.
+
+    Neither method applies the BGE query prefix, and that is the point. ragas scores
+    answer_relevancy by reverse-generating questions from the answer and comparing
+    them to the real one, calling embed_query for one side and embed_documents for
+    the other. Both sides are questions, so this is a symmetric similarity task, and
+    BGE's instruction prefix is for asymmetric query-to-passage retrieval. Prefixing
+    one side only put the two vectors in different spaces: identical text scored
+    0.940 instead of 1.000, a ceiling that dragged every question down by ~0.06.
     """
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
@@ -54,9 +62,9 @@ class LocalEmbeddings:
         return embed_passages(texts)
 
     def embed_query(self, text: str) -> list[float]:
-        from studyrag.embed import embed_query
+        from studyrag.embed import embed_passages
 
-        return embed_query(text)
+        return embed_passages([text])[0]
 
 
 def run() -> dict[str, Any]:
