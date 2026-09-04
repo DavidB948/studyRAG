@@ -22,7 +22,7 @@ def _model():
     """Load on first use. ~420 MB, same size class as the embedder."""
     from sentence_transformers import CrossEncoder
 
-    return CrossEncoder(settings.rerank_model)
+    return CrossEncoder(settings().rerank_model)
 
 
 def score(query: str, texts: list[str]) -> list[float]:

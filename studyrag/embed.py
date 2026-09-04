@@ -22,16 +22,16 @@ def _model():
     """
     from sentence_transformers import SentenceTransformer
 
-    model = SentenceTransformer(settings.embed_model)
+    model = SentenceTransformer(settings().embed_model)
     # Renamed in sentence-transformers v5; the old name still works but warns.
     dimension_of = getattr(model, "get_embedding_dimension", None) or (
         model.get_embedding_dimension
     )
     actual = dimension_of()
-    if actual != settings.embed_dim:
+    if actual != settings().embed_dim:
         raise RuntimeError(
-            f"{settings.embed_model} produces {actual}-dim vectors but embed_dim is "
-            f"{settings.embed_dim}. The schema's vector(N) must match. Check .env: it "
+            f"{settings().embed_model} produces {actual}-dim vectors but embed_dim is "
+            f"{settings().embed_dim}. The schema's vector(N) must match. Check .env: it "
             f"overrides the default in config.py."
         )
     return model
@@ -62,6 +62,6 @@ def embed_query(text: str) -> list[float]:
     passage does not. Prefixing both, or neither, measurably costs recall.
     """
     vector = _model().encode(
-        settings.query_prefix + text, normalize_embeddings=True
+        settings().query_prefix + text, normalize_embeddings=True
     )
     return vector.tolist()

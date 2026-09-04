@@ -8,6 +8,7 @@ drift out of step with `embed_dim` and the `vector(N)` column with nothing to
 catch it.
 """
 
+from functools import lru_cache
 from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -53,4 +54,16 @@ class Settings(BaseSettings):
     prose_overlap_tokens: int = 50
 
 
-settings = Settings()  # type: ignore[call-arg]
+@lru_cache(maxsize=1)
+def settings() -> Settings:
+    """Config, built on first use rather than at import.
+
+    Instantiating at module scope made importing ANY module that transitively
+    reaches config require a populated .env — so `allocate()`, a pure function over
+    integers, could not be imported without a database URL. CI caught it: the pure
+    unit tests failed on a missing `database_url` they never touch.
+
+    Cached, so the .env is still read once per process and a bad value still fails
+    loudly, just at the point of use instead of the point of import.
+    """
+    return Settings()  # type: ignore[call-arg]

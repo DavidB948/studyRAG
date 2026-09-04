@@ -74,7 +74,7 @@ def identify(path: str | Path) -> tuple[str, str, str]:
     if path.suffix.lower() not in SUPPORTED:
         raise ValueError(f"Unsupported file type {path.suffix}; expected one of {SUPPORTED}")
 
-    root = settings.corpus_root.resolve()
+    root = settings().corpus_root.resolve()
     resolved = path.resolve()
     if not resolved.is_relative_to(root):
         raise ValueError(f"{path} is outside the corpus root {root}")
@@ -113,7 +113,7 @@ def discover(root: Path | None = None) -> list[Path]:
     `is_file` and the dotfile skip are not paranoia: macOS writes `._name.pdf`
     AppleDouble sidecars, and a directory can be named `notes.md`.
     """
-    root = root or settings.corpus_root
+    root = root or settings().corpus_root
     if not root.exists():
         log.error("corpus root %s does not exist", root.resolve())
         return []

@@ -22,9 +22,9 @@ def judge():
 
     return LangchainLLMWrapper(
         ChatOpenAI(
-            model=settings.judge_model or settings.llm_model or "",
-            api_key=settings.judge_api_key or settings.llm_api_key,
-            base_url=settings.judge_base_url or settings.llm_base_url,
+            model=settings().judge_model or settings().llm_model or "",
+            api_key=settings().judge_api_key or settings().llm_api_key,
+            base_url=settings().judge_base_url or settings().llm_base_url,
             temperature=0.0,  # a judge must be reproducible
         )
     )

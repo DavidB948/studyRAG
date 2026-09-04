@@ -251,8 +251,8 @@ def run() -> dict[str, Any]:
     return {
         "run_at": datetime.now(UTC).isoformat(),
         "by_kind": by_kind,
-        "embed_model": settings.embed_model,
-        "judge_model": settings.judge_model or settings.llm_model,
+        "embed_model": settings().embed_model,
+        "judge_model": settings().judge_model or settings().llm_model,
         "threshold": THRESHOLD,
         "by_course": by_course,
         "per_question": per_question,

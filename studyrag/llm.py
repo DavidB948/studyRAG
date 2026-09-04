@@ -19,9 +19,9 @@ log = logging.getLogger(__name__)
 
 @lru_cache(maxsize=1)
 def _client() -> OpenAI:
-    if not settings.llm_api_key or not settings.llm_base_url:
+    if not settings().llm_api_key or not settings().llm_base_url:
         raise RuntimeError("LLM_API_KEY and LLM_BASE_URL must be set in .env")
-    return OpenAI(api_key=settings.llm_api_key, base_url=settings.llm_base_url)
+    return OpenAI(api_key=settings().llm_api_key, base_url=settings().llm_base_url)
 
 
 def complete_json[T: BaseModel](
@@ -47,7 +47,7 @@ def complete_json[T: BaseModel](
 
     for attempt in range(retries + 1):
         response = _client().chat.completions.create(
-            model=settings.llm_model or "",
+            model=settings().llm_model or "",
             messages=messages,  # type: ignore[arg-type]
             temperature=temperature,
             response_format={"type": "json_object"},

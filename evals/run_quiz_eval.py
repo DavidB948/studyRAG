@@ -141,7 +141,7 @@ def run() -> dict[str, Any]:
 
     return {
         "run_at": datetime.now(UTC).isoformat(),
-        "judge_model": settings.judge_model or settings.llm_model,
+        "judge_model": settings().judge_model or settings().llm_model,
         "n_questions_requested": N_QUESTIONS,
         "threshold": THRESHOLD,
         "by_scope": by_scope,

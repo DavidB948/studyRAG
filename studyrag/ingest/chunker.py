@@ -219,8 +219,8 @@ def chunk_prose(doc: RawDoc, count_tokens: Callable[[str], int]) -> list[Chunk]:
         still record the page it starts on. Citations must survive the join.
       - Split into blocks: markdown headings if the document has them, else
         blank-line paragraphs.
-      - Accumulate blocks to settings.prose_target_tokens, then carry
-        settings.prose_overlap_tokens of tail into the next chunk. Overlap
+      - Accumulate blocks to settings().prose_target_tokens, then carry
+        settings().prose_overlap_tokens of tail into the next chunk. Overlap
         exists here and not in slides because a paragraph continues an argument
         that the previous one started; a slide is self-contained.
       - Never break mid-paragraph unless one paragraph alone exceeds the target,

@@ -27,7 +27,7 @@ def connect() -> psycopg.Connection:
     savepoint but commits nothing, so `conn.close()` rolls the whole run back
     while every statement reported success.
     """
-    conn = psycopg.connect(settings.database_url, autocommit=True)
+    conn = psycopg.connect(settings().database_url, autocommit=True)
     register_vector(conn)
     return conn
 
@@ -103,7 +103,7 @@ def upsert_chunks(
                 c.content,
                 c.token_count,
                 v,
-                settings.embed_model,
+                settings().embed_model,
             )
             for c, v in zip(chunks, vectors, strict=True)
         ],
